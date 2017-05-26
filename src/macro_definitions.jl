@@ -44,19 +44,19 @@ function macrobody!(ex, blk)
     code
 end
 
-macro addstates!(sp, blk)
+macro states!(sp, blk)
     sp = esc(sp)
     ex = Expr(:call, :addstates!, sp)
     macrobody!(ex, blk)
 end
 
-macro addcontrols!(sp, blk)
+macro controls!(sp, blk)
     sp = esc(sp)
     ex = Expr(:call, :addcontrols!, sp)
     macrobody!(ex, blk)
 end
 
-macro addnoises!(sp, blk)
+macro noises!(sp, blk)
     sp = esc(sp)
     ex = Expr(:call, :addnoises!, sp)
     macrobody!(ex, blk)

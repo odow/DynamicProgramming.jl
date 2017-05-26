@@ -26,15 +26,15 @@ m = SDPModel(
         sense  = :Min
             ) do sp, t
 
-    @addstates!(sp, begin
+    @states!(sp, begin
         storage in 0.:0.01:1
     end)
 
-    @addcontrols!(sp, begin
+    @controls!(sp, begin
         charge in 0:0.05:1
     end)
 
-    @addnoises!(sp, begin
+    @noises!(sp, begin
         # charge leakage
         xi in linspace(0, 0.1, 10)
     end)

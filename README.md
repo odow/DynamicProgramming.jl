@@ -34,19 +34,19 @@ Inside the `SDPModel` definition, we define our subproblems. We first need to ad
 
 States can be added with the following macro:
 ```julia
-@addstates!(sp, begin
+@states!(sp, begin
     x in linspace(0, 1, 10)
 end)
 ```
 
 This creates a state variable `x` that is discretised into the set `linspace(0, 1, 10)`. Note that currently, all state dimensions get converted into `Float64` representations. The discretisation should be any type that can be converted to a `Vector{Float64}` type.
 
-Controls can be added with the `@addcontrols!` macro that has similar syntax. However there is less restriction on the type. The discretisation should just be an iterable subtype of `AbstractVector`.
+Controls can be added with the `@controls!` macro that has similar syntax. However there is less restriction on the type. The discretisation should just be an iterable subtype of `AbstractVector`.
 
-Noise (or stochastic variables) can be added with the `@addnoises!` macro:
+Noise (or stochastic variables) can be added with the `@noises!` macro:
 
 ```julia
-@addnoises!(sp, begin
+@noises!(sp, begin
     u in WeightedDist([1,2,3], [0.5, 0.25, 0.25])
     v in 1:10
 end)

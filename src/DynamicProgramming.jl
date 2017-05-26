@@ -13,7 +13,7 @@ using Interpolations, JSON
 export
     SDPModel, solve, simulate,
     # macros
-    @addstates!, @addcontrols!, @addnoises!, @visualise,
+    @states!, @controls!, @noises!, @visualise,
     # model functions
     dynamics!, terminalobjective!, constraints!,
     WeightedDist,
