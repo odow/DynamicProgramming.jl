@@ -2,6 +2,7 @@ using Documenter, DynamicProgramming
 
 makedocs(
     # modules = [DynamicProgramming],
+    clean = false,
     format = :html,
     sitename = "DynamicProgramming.jl",
     authors = "Oscar Dowson",

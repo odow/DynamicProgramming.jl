@@ -16,11 +16,13 @@ export
     @states!, @controls!, @noises!, @visualise,
     # model functions
     dynamics!, terminalobjective!, constraints!,
-    WeightedDist,
+    DiscreteDistribution,
     # risk measures
     Expectation, NestedCVaR,
     # uncertainty realisations
     WaitAndSee, HereAndNow, ExpectedValue
+
+@deprecate WeightedDist DiscreteDistribution
 
 include("MIT_licencedcode.jl")
 include("type_definitions.jl")

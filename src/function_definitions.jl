@@ -83,9 +83,9 @@ getinterpolatedvalue(stage, state) = stage.interpolatedsurface[state...]
 """
 Create an array of WeightedProbability
 """
-function WeightedDist{T}(x::AbstractVector{T}, weights::AbstractVector)
+function DiscreteDistribution{T}(observations::AbstractVector{T}, probabilities::AbstractVector)
     @assert length(x) == length(weights)
-    if !isapprox(sum(weights) , 1)
+    if !isapprox(sum(weights) , 1.0)
         warn("Weight vector is not normalised. Sum = $(sum(weights)). Normalising.")
         weights ./= sum(weights)
     end
@@ -373,7 +373,7 @@ end
 Initialise storage for simulation
 """
 function initialiseresult!(results::Dict{Symbol, Any}, replications, stages, key::Symbol, Ty::DataType)
-    results[key] = Array(Ty, (stages, replications))
+    results[key] = Array{Ty}((stages, replications))
 end
 initialiseresult!{T}(results, replications, stages, key, x::AbstractVector{T}) = initialiseresult!(results, replications, stages, key, T)
 initialiseresult!{T}(results, replications, stages, key, x::AbstractVector{WeightedProbability{T}}) = initialiseresult!(results, replications, stages, key, T)

@@ -21,7 +21,7 @@ end
 
 import Base: product, indices, length, convert, rand, isless
 
-immutable NestedCVaRType
+struct NestedCVaRType
     lambda::Float64
     beta::Float64
 end
@@ -62,7 +62,7 @@ Expectation() = NestedCVaRType(1., 1.)
 """
 A storage container for weighted probabilities
 """
-immutable WeightedProbability{T}
+struct WeightedProbability{T}
     value::T
     probability::Float64
 end
@@ -103,7 +103,7 @@ getType{T}(x::AbstractVector{WeightedProbability{T}}) = T
 """
 A GenericSpace is a space defined by discrete points along N dimensions.
 """
-immutable GenericSpace{T, T2, N}
+struct GenericSpace{T, T2, N}
     dimensions::T                             # list of dimensions
     indices::Tuple{Vararg{UnitRange{Int}, N}} # List of indices
     nameindices::Dict{Symbol, Int}            # a reference naming dict
@@ -140,7 +140,7 @@ Base.product() = [()]
 Base.indices(gs::GenericSpace) = product(gs.indices...)
 
 # ===================================
-type Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
+mutable struct Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
     statespace::GenericSpace{T,T2,M}
     controlspace::U
     noisespace::V
@@ -162,8 +162,8 @@ function Stage(M, tmpdict)
     tmpdict[:statespace],
     tmpdict[:controlspace],
     tmpdict[:noisespace],
-    Array(Float64, tuple(map(length, tmpdict[:statespace].dimensions)...)),
-    interpolate(tuple(fill(Float64[], M)...), Array(Float64, tuple(zeros(Int, M)...)), Gridded(Linear())),
+    Array{Float64}(tuple(map(length, tmpdict[:statespace].dimensions)...)),
+    interpolate(tuple(fill(Float64[], M)...), Array{Float64}(tuple(zeros(Int, M)...)), Gridded(Linear())),
     tmpdict[:dynamics],
     tmpdict[:reward],
     tmpdict[:terminalcost],
@@ -171,7 +171,7 @@ function Stage(M, tmpdict)
     )
 end
 
-type SDPModel{T<:Stage, N}
+mutable struct SDPModel{T<:Stage, N}
     stages::Tuple{Vararg{T, N}}
     sense::ModelSense
 end
@@ -207,7 +207,7 @@ function SDPModel(buildstage!::Function;
     return SDPModel(tuple(outstages...), modsense)
 end
 
-type TimingLog
+mutable struct TimingLog
     dynamics::Float64
     constraints::Float64
     reward::Float64

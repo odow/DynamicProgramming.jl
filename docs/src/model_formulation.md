@@ -35,14 +35,14 @@ Noise (or stochastic variables) can be added with the `@addnoises!` macro:
 
 ```julia
 @addnoises!(sp, begin
-    u = WeightedDist([1,2,3], [0.5, 0.25, 0.25])
+    u = DiscreteDistribution([1,2,3], [0.5, 0.25, 0.25])
     v = 1:10
 end)
 ```
 
-In contrast to the other two macros, there is a slight subtlety. The discretisations can either be subtypes of `AbstractVector` (in which case their realisations are assumed to be uniformly sampled), or a `WeightedDist`.
+In contrast to the other two macros, there is a slight subtlety. The discretisations can either be subtypes of `AbstractVector` (in which case their realisations are assumed to be uniformly sampled), or a `DiscreteDistribution`.
 
-The `WeighedDist` constructor is `WeightedDist(values::AbstractVector, probability::AbstractVector)`. This realisations `values` are sampled with probability `probability`.
+The `WeighedDist` constructor is `DiscreteDistribution(values::AbstractVector, probability::AbstractVector)`. This realisations `values` are sampled with probability `probability`.
 
 If more than one noise is defined, then the multiple noises are assumed to be independent.
 
