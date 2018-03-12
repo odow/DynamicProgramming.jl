@@ -363,8 +363,13 @@ function solve(m::SDPModel;
         printlog(t, totaltime[1])
     end
 end
+
 function printheader()
+    println("""-------------------------------------------------------------------------------
+                       DynamicProgramming.jl © Oscar Dowson, 2018
+    -------------------------------------------------------------------------------""")
     println("Stage | Elapsed Time")
+    println("-------------------------------------------------------------------------------""")
 end
 function printlog(t::Int, time::Float64)
     println(humanize(t, "5d"), "| ", humanize(time, "8.3f"))
