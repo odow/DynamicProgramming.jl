@@ -2,6 +2,16 @@
 
 A Julia package for discrete stochastic dynamic programming.
 
+| **Build Status** | **Coverage** |
+|:--------------------:|:----------------:|
+| [![Build Status][build-img]][build-url] | [![Codecov branch][codecov-img]][codecov-url]
+
+[build-img]: https://travis-ci.org/odow/DynamicProgramming.jl.svg?branch=master
+[build-url]: https://travis-ci.org/odow/DynamicProgramming.jl
+
+[codecov-img]: https://codecov.io/github/odow/DynamicProgramming.jl/coverage.svg?branch=master
+[codecov-url]: https://codecov.io/github/odow/DynamicProgramming.jl?branch=master
+
 ## Installation
 
 This package is not yet registered. **Until it is, things may change. It is perfectly
