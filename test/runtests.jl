@@ -4,8 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #############################################################################
 
-using DynamicProgramming
-using Base.Test
+using DynamicProgramming, Base.Test
 
 const DP = DynamicProgramming
 
@@ -19,6 +18,11 @@ const DP = DynamicProgramming
     @test DP.comparison(DP.Maximisation, 0, 0) == false
 end
 
-for example in ["simple_example.jl", "battery_storage.jl"]
-    include(joinpath(dirname(dirname(@__FILE__)), "examples", example))
+const examples_dir = joinpath(dirname(dirname(@__FILE__)), "examples")
+
+for example in ["inventory_control.jl"]
+    @testset "$example" begin
+        println("Running $(example)")
+        include(joinpath(examples_dir, example))
+    end
 end

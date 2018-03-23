@@ -84,14 +84,14 @@ getinterpolatedvalue(stage, state) = stage.interpolatedsurface[state...]
 Create an array of WeightedProbability
 """
 function DiscreteDistribution{T}(observations::AbstractVector{T}, probabilities::AbstractVector)
-    @assert length(x) == length(weights)
-    if !isapprox(sum(weights) , 1.0)
-        warn("Weight vector is not normalised. Sum = $(sum(weights)). Normalising.")
-        weights ./= sum(weights)
+    @assert length(observations) == length(probabilities)
+    if !isapprox(sum(probabilities) , 1.0)
+        warn("Weight vector is not normalised. Sum = $(sum(probabilities)). Normalising.")
+        probabilities ./= sum(probabilities)
     end
     y = WeightedProbability{T}[]
-    for i=1:length(x)
-        push!(y, WeightedProbability(x[i], weights[i]))
+    for (xi, pi) in zip(observations, probabilities)
+        push!(y, WeightedProbability(xi, pi))
     end
     y
 end

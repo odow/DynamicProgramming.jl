@@ -81,10 +81,10 @@ end
 )
 
 @time results = simulate(m,
-    1000,          # number of simulations
-    upstream = 100.0,
+    1000,
+    upstream   = 100.0,
     downstream = 100.0,
-    price = 61.261
+    price      = 61.261
 )
 
 @visualise(results, t, i, begin
