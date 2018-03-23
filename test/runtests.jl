@@ -20,7 +20,7 @@ end
 
 const examples_dir = joinpath(dirname(dirname(@__FILE__)), "examples")
 
-for example in ["inventory_control.jl"]
+for example in ["inventory_control.jl", "air_conditioning.jl"]
     @testset "$example" begin
         println("Running $(example)")
         include(joinpath(examples_dir, example))

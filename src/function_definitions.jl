@@ -4,6 +4,19 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #############################################################################
 
+function getbound(m, stage; kwargs...)
+    stage = m.stages[stage]
+    state = zeros(length(stage.statespace))
+    for (key, val) in kwargs
+        if !haskey(stage.statespace.nameindices, key)
+            error("State not found")
+        else
+            state[stage.statespace.nameindices[key]] = val
+
+        end
+    end
+    stage.interpolatedsurface[state...]
+end
 """
 Test if trial solution is better than the incumbent
 """
