@@ -113,3 +113,39 @@ ev_sims = simulate(m, 1_000, xₖ=0.0)
 ev_A = ev_sims[:uₖ] + (ev_sims[:xₖ] + ev_sims[:uₖ] - ev_sims[:wₖ]).^2
 @test sum(ev_A, 1)[:] == ev_sims[:objective]
 @test isapprox(mean(ev_sims[:objective]), 3.29, atol=1e-2)
+
+# ==============================
+#   Risk-Averse Here-and-Now
+# ==============================
+solve(m,
+    realisation = HereAndNow,
+    riskmeasure = NestedCVaR(beta=1.0, lambda=0.0)
+)
+
+for t in 1:3
+    for xk in 0:1:2
+        @test isapprox(m.stages[t].interpolatedsurface[xk], here_and_now_solution[xk+1, t], atol=1e-2)
+    end
+end
+
+solve(m,
+    realisation = HereAndNow,
+    riskmeasure = NestedCVaR(beta=0.5, lambda=0.5)
+)
+
+risk_averse_solution = [
+    4.05  2.75   1.45;
+    3.05  1.75   0.45;
+    3.243 2.035  1.35
+]
+
+for t in 1:3
+    for xk in 0:1:2
+        @test isapprox(m.stages[t].interpolatedsurface[xk], risk_averse_solution[xk+1, t], atol=1e-2)
+    end
+end
+
+# ==============================
+#   Errors
+# ==============================
+@test_throws Exception simulate(m, 1, x=0.0)
