@@ -338,29 +338,34 @@ Solve SDPModel
 """
 function solve(m::SDPModel;
     realisation::ModelType=WaitAndSee,
-    riskmeasure::NestedCVaRType=Expectation()
+    riskmeasure::NestedCVaRType=Expectation(),
+    solvetype = nprocs() > 3 ? Parallel : Serial,
+    print_level::Int = 3
     )
-    solvetype = Serial
-
-    if nprocs() >= 3
-        solvetype = Parallel
+    if solvetype == Parallel
         sendtoall(m = deepcopy(m))
     end
 
     risk_measure_function = NestedCVaR(m.sense, riskmeasure.beta, riskmeasure.lambda)
     totaltime = [0.0]
     # solve final stage
-    printheader()
+    if print_level > 0
+        printheader()
+    end
     tic()
     solveterminal!(solvetype, realisation, m, risk_measure_function)
     totaltime[1] += toq()
-    printlog(length(m.stages), totaltime[1])
+    if print_level > 0
+        printlog(length(m.stages), totaltime[1])
+    end
     # backwards recursion
     for t in (length(m.stages)-1):-1:1
         tic()
         solvestage!(solvetype, realisation, InterpolatedReward, m, t, risk_measure_function)
         totaltime[1] += toq()
-        printlog(t, totaltime[1])
+        if print_level > 0
+            printlog(t, totaltime[1])
+        end
     end
 end
 

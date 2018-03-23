@@ -22,7 +22,7 @@ m = SDPModel(
     end)
 
     @controls!(sp, begin
-        uₖ in 0:1:2
+        uₖ = 0:1:2
     end)
 
     @noises!(sp, begin
@@ -91,7 +91,10 @@ ws_A = ws_sims[:uₖ] + (ws_sims[:xₖ] + ws_sims[:uₖ] - ws_sims[:wₖ]).^2
 # ==============================
 #   Expected-Value Solution
 # ==============================
-solve(m, realisation=ExpectedValue)
+solve(m,
+    realisation = ExpectedValue,
+    print_level = 0
+)
 
 expected_value_solution = [
     3.03 2.02  1.01;
