@@ -39,7 +39,7 @@ m = SDPModel(
     end
 
     constraints!(sp) do x, u, w
-        x[xₖ] + u[uₖ] - w[wₖ] <= 2
+        x[xₖ] + u[uₖ] <= 2
     end
 
 end
@@ -56,3 +56,9 @@ for t in 1:3
         @test isapprox(m.stages[t].interpolatedsurface[xk], bertsekas_solution[xk+1, t], atol=1e-2)
     end
 end
+
+srand(123)
+sims = simulate(m, 1_000, xₖ=0.0)
+A = sims[:uₖ] + (sims[:xₖ] + sims[:uₖ] - sims[:wₖ]).^2
+@test sum(A, 1)[:] == sims[:objective]
+@test isapprox(mean(sims[:objective]), 3.29, atol=1e-2)
