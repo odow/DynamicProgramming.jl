@@ -6,7 +6,7 @@
 
 #=
     Example 1.3.2 from
-        Bertskas, D. (2005). Dynamic Programming and Optimal Control:
+        Bertsekas, D. (2005). Dynamic Programming and Optimal Control:
         Volume I (3rd ed.). Bellmont, MA: Athena Scientific.
 =#
 
