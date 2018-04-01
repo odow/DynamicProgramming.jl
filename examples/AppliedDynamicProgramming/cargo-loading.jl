@@ -24,10 +24,10 @@ using DynamicProgramming, Base.Test
 m = SDPModel(sense=:Max, stages=8) do sp, t
     weights = [20, 18, 14, 12, 10, 16, 22, 24]
     values  = [72, 60, 40, 27, 20, 50, 85, 96]
-    @states!(sp, begin
+    @states(sp, begin
         remaining_space in 0.0:1.0:100.0
     end)
-    @controls!(sp, begin
+    @controls(sp, begin
         item in 0.0:1.0:5.0
     end)
     dynamics!(sp) do y, x, u, w

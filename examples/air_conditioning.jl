@@ -32,12 +32,12 @@ function airconditioningmodel()
             [100, 300]
         ]
 
-        @states!(sp, begin
+        @states(sp, begin
             # number of units
             storage in [0, 100, 200, 300]
         end)
 
-        @controls!(sp, begin
+        @controls(sp, begin
             # number of units produced during normal production
             # circumstances
             production in [0, 100, 200]
@@ -46,7 +46,7 @@ function airconditioningmodel()
             overtime   in [0, 100, 200, 300]
         end)
 
-        @noises!(sp, begin
+        @noises(sp, begin
             demand in DEMAND[stage]
         end)
 

@@ -22,18 +22,18 @@ m = SDPModel(
             0.0
         end
     end
-    @states!(sp, begin
+    @states(sp, begin
           upstream in 0:5:100
         downstream in 0:5:100
              price in vcat(collect(50:0.5:61), 61.261, collect(62:0.5:90))
     end)
 
-    @controls!(sp, begin
+    @controls(sp, begin
           uprelease in 0:5:70
         downrelease in 0:5:70
     end)
 
-    @noises!(sp, begin
+    @noises(sp, begin
         noise in vcat(-[0.5,1.5,2.5,3.5,4.5], [0.5,1.5,2.5,3.5,4.5])
     end)
 

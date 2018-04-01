@@ -22,17 +22,17 @@ m = SDPModel(
     sense    = :Max
             ) do sp, t
 
-    @states!(sp, begin
+    @states(sp, begin
         contracts  in linspace(0, 1.5, 16)
         price      in linspace(3, 9, 10)
         production in linspace(0, 1.5, 16)
     end)
 
-    @controls!(sp, begin
+    @controls(sp, begin
         buy in linspace(0, 1.2, 13)
     end)
 
-    @noises!(sp, begin
+    @noises(sp, begin
         alpha in sampled_errors
         beta  in linspace(0., 0.05, 5)
     end)

@@ -34,11 +34,11 @@ m = SDPModel(sense=:Min, stages=10) do sp, t
     sizes   = [5,4,7,4,6,2,5,7,3,4]
     costs   = [22,22,12,6,12,2,12,12,22,4]
     lambda  = [1,1,4,4,1,4,1,1,1,3]
-    @states!(sp, begin
+    @states(sp, begin
         weight in 0.0:1.0:30.0
         size   in 0.0:1.0:30.0
     end)
-    @controls!(sp, begin
+    @controls(sp, begin
         quantity in 0.0:1.0:3.0
     end)
     P(k,i) = exp(-lambda[i]) * lambda[i]^k / factorial(k)
