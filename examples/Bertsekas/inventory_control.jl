@@ -17,15 +17,15 @@ m = SDPModel(
         sense  = :Min
             ) do sp, t
 
-    @states!(sp, begin
+    @states(sp, begin
         xₖ in 0:1:2
     end)
 
-    @controls!(sp, begin
+    @controls(sp, begin
         uₖ = 0:1:2
     end)
 
-    @noises!(sp, begin
+    @noises(sp, begin
         wₖ in DiscreteDistribution([0.0, 1.0, 2.0], [0.1, 0.7, 0.2])
     end)
 

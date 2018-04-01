@@ -52,7 +52,7 @@ add some state variables, some control (or action) variables, and some noise (or
 
 States can be added with the following macro:
 ```julia
-@states!(sp, begin
+@states(sp, begin
     x in linspace(0, 1, 10)
 end)
 ```
@@ -62,14 +62,14 @@ This creates a state variable `x` that is discretised into the set
 into `Float64` representations. The discretisation should be any type that can
 be converted to a `Vector{Float64}` type.
 
-Controls can be added with the `@controls!` macro that has similar syntax.
+Controls can be added with the `@controls` macro that has similar syntax.
 However there is less restriction on the type. The discretisation should just be
 an iterable subtype of `AbstractVector`.
 
-Noise (or stochastic variables) can be added with the `@noises!` macro:
+Noise (or stochastic variables) can be added with the `@noises` macro:
 
 ```julia
-@noises!(sp, begin
+@noises(sp, begin
     u in DiscreteDistribution([1,2,3], [0.5, 0.25, 0.25])
     v in 1:10
 end)
