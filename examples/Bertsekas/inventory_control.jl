@@ -47,7 +47,7 @@ end
 # ==============================
 #   Here-and-Now Solution
 # ==============================
-solve(m, realisation=HereAndNow)
+solve(m, realisation=HereAndNow, print_level=0)
 
 here_and_now_solution = [
     3.7   2.5  1.3;
@@ -69,7 +69,7 @@ A = sims[:uₖ] + (sims[:xₖ] + sims[:uₖ] - sims[:wₖ]).^2
 # ==============================
 #   Wait-and-See Solution
 # ==============================
-solve(m, realisation=WaitAndSee)
+solve(m, realisation=WaitAndSee, print_level=0)
 
 wait_and_see_solution = [
     3.300 2.20  1.10;
@@ -119,7 +119,8 @@ ev_A = ev_sims[:uₖ] + (ev_sims[:xₖ] + ev_sims[:uₖ] - ev_sims[:wₖ]).^2
 # ==============================
 solve(m,
     realisation = HereAndNow,
-    riskmeasure = NestedCVaR(beta=1.0, lambda=0.0)
+    riskmeasure = NestedCVaR(beta=1.0, lambda=0.0),
+    print_level = 0
 )
 
 for t in 1:3
@@ -130,7 +131,8 @@ end
 
 solve(m,
     realisation = HereAndNow,
-    riskmeasure = NestedCVaR(beta=0.5, lambda=0.5)
+    riskmeasure = NestedCVaR(beta=0.5, lambda=0.5),
+    print_level = 0
 )
 
 risk_averse_solution = [

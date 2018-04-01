@@ -28,6 +28,10 @@ const Examples = Dict(
     "Bertsekas" => [
         "inventory_control.jl"
     ],
+    "FAST" => [
+        "hydro-thermal.jl",
+        "production-management.jl"
+    ],
     "" => [
         "air_conditioning.jl"
     ]
