@@ -9,13 +9,13 @@ using DynamicProgramming, Base.Test
 const DP = DynamicProgramming
 
 @testset "Simple helper functions" begin
-    @test DP.comparison(DP.Minimisation, 1., 2.) == true
-    @test DP.comparison(DP.Minimisation, 2., 1.) == false
-    @test DP.comparison(DP.Minimisation, 0, 0) == false
+    @test DP.comparison(DP.Minimisation, 1.0, 2.0) == true
+    @test DP.comparison(DP.Minimisation, 2.0, 1.0) == false
+    @test DP.comparison(DP.Minimisation, 0, 0)     == false
 
-    @test DP.comparison(DP.Maximisation, 1., 2.) == false
-    @test DP.comparison(DP.Maximisation, 2., 1.) == true
-    @test DP.comparison(DP.Maximisation, 0, 0) == false
+    @test DP.comparison(DP.Maximisation, 1.0, 2.0) == false
+    @test DP.comparison(DP.Maximisation, 2.0, 1.0) == true
+    @test DP.comparison(DP.Maximisation, 0, 0)     == false
 end
 
 const examples_dir = joinpath(dirname(dirname(@__FILE__)), "examples")
@@ -26,7 +26,8 @@ const Examples = Dict(
             "flyaway-kit.jl"
         ],
     "Bertsekas" => [
-        "inventory_control.jl"
+        "inventory_control.jl",
+        "quarterback.jl"
     ],
     "FAST" => [
         "hydro-thermal.jl",
