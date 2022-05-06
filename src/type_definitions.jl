@@ -4,23 +4,6 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #############################################################################
 
-"""
-macro dispatchhelper(T, args...)
-    code = quote end
-    ex = Expr(:curly, :Union)
-    for arg in args
-        push!(code.args, Expr(:typealias, arg, Expr(:curly, :Val, QuoteNode(arg))))
-        push!(ex.args, Expr(:curly, :Type, arg))
-    end
-    push!(code.args, Expr(:typealias, T, ex))
-    code
-end
-@dispatchhelper(ModelType, HereAndNow, WaitAndSee, ExpectedValue)
-@dispatchhelper(ModelSense, Minimisation, Maximisation)
-@dispatchhelper(RewardType, TerminalReward, InterpolatedReward)
-@dispatchhelper(SolveType, Parallel, Serial)
-"""
-
 abstract type ModelType end
 abstract type HereAndNow <: ModelType end
 abstract type WaitAndSee <: ModelType end
