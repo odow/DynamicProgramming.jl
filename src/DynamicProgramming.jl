@@ -4,11 +4,11 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #############################################################################
 
-__precompile__()
+#__precompile__()
 
 module DynamicProgramming
 
-using Interpolations, JSON
+using Interpolations, JSON, Printf, Distributed, LinearAlgebra
 
 export
     SDPModel, solve, simulate,

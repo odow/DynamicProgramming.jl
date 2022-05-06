@@ -10,7 +10,7 @@
         Volume I (3rd ed.). Bellmont, MA: Athena Scientific.
 =#
 
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test, Statistics, Random
 
 m = SDPModel(
         stages = 3,
@@ -60,10 +60,10 @@ for t in 1:3
     end
 end
 
-srand(123)
-sims = simulate(m, 1_000, xₖ=0.0)
+Random.seed!(123)
+sims = simulate(m, 1_000_000, xₖ=0.0)
 A = sims[:uₖ] + (sims[:xₖ] + sims[:uₖ] - sims[:wₖ]).^2
-@test sum(A, 1)[:] == sims[:objective]
+@test sum(A, dims=1)[:] == sims[:objective]
 @test isapprox(mean(sims[:objective]), 3.29, atol=1e-2)
 
 # ==============================
@@ -82,10 +82,10 @@ for t in 1:3
     end
 end
 
-srand(123)
-ws_sims = simulate(m, 1_000, xₖ=0.0)
+Random.seed!(123)
+ws_sims = simulate(m, 1_000_000, xₖ=0.0)
 ws_A = ws_sims[:uₖ] + (ws_sims[:xₖ] + ws_sims[:uₖ] - ws_sims[:wₖ]).^2
-@test sum(ws_A, 1)[:] == ws_sims[:objective]
+@test sum(ws_A, dims=1)[:] == ws_sims[:objective]
 @test isapprox(mean(ws_sims[:objective]), 3.29, atol=1e-2)
 
 # ==============================
@@ -108,10 +108,10 @@ for t in 1:3
     end
 end
 
-srand(123)
-ev_sims = simulate(m, 1_000, xₖ=0.0)
+Random.seed!(123)
+ev_sims = simulate(m, 1_000_000, xₖ=0.0)
 ev_A = ev_sims[:uₖ] + (ev_sims[:xₖ] + ev_sims[:uₖ] - ev_sims[:wₖ]).^2
-@test sum(ev_A, 1)[:] == ev_sims[:objective]
+@test sum(ev_A, dims=1)[:] == ev_sims[:objective]
 @test isapprox(mean(ev_sims[:objective]), 3.29, atol=1e-2)
 
 # ==============================

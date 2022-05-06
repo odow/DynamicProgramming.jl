@@ -27,7 +27,7 @@
     for the costs and lambda so we just make some up.
 =#
 
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test
 
 m = SDPModel(sense=:Min, stages=10) do sp, t
     weights = [3,5,2,5,6,2,4,7,5,3]

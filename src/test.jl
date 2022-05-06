@@ -9,7 +9,7 @@
     https://github.com/leopoldcambier/FAST/tree/daea3d80a5ebb2c52f78670e34db56d53ca2e778/examples/hydro%20thermal
 ==#
 
-using DynamicProgramming, Test
+using DynamicProgramming
 
 m = SDPModel(
                 sense  = :Min,
@@ -39,4 +39,4 @@ m = SDPModel(
 end
 
 solve(m, realisation=WaitAndSee, print_level=0)
-@test DynamicProgramming.getbound(m,1,x=0) == 10
+println(DynamicProgramming.getbound(m,1,x=0))
