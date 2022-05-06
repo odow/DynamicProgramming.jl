@@ -3,7 +3,11 @@ using Documenter, DynamicProgramming
 makedocs(
     # modules = [DynamicProgramming],
     clean = false,
-    format = :html,
+    format = Documenter.HTML(
+        prettyurls=get(ENV, "CI", "false") == "true",
+        canonical="https://odow.github.io/DynamicProgramming.jl",
+        assets=String[],
+    ),
     sitename = "DynamicProgramming.jl",
     authors = "Oscar Dowson",
     pages = [

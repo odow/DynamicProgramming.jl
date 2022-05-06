@@ -1,0 +1,3 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DynamicProgramming = "4f66ce1b-7027-460a-9d32-7f816a89c608"
