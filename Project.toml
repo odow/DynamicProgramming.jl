@@ -1,6 +1,6 @@
 name = "DynamicProgramming"
 uuid = "4f66ce1b-7027-460a-9d32-7f816a89c608"
-authors = ["Emanuele Concas <conema@outlook.com>"]
+authors = ["Oscar Dowson <o.dowson@gmail.com"]
 version = "0.1.0"
 
 [deps]
