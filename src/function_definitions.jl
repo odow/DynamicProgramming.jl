@@ -15,7 +15,7 @@ function getbound(m, stage; kwargs...)
 
         end
     end
-    stage.interpolatedsurface[state...]
+    stage.interpolatedsurface(state...)
 end
 """
 Test if trial solution is better than the incumbent
