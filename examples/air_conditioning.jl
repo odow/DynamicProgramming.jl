@@ -56,7 +56,7 @@ function airconditioningmodel()
         end
 
         constraints!(sp) do x, u, w
-            x[storage] + u[production] + u[overtime] - w[demand] >= 0 && x[storage] + u[production] + u[overtime] - w[demand] <= 300
+            0 <= x[storage] + u[production] + u[overtime] - w[demand] <= 300
         end
     end
 end
