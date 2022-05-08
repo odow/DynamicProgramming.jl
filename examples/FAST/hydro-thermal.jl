@@ -11,10 +11,7 @@
 
 using DynamicProgramming, Test
 
-m = SDPModel(
-                sense  = :Min,
-                stages = 2
-                    ) do sp, t
+m = SDPModel(sense = :Min, stages = 2) do sp, t
     RAINFALL = t == 1 ? [6] : [2, 10]
     @states(sp, begin
         x in 0:1:8
@@ -31,12 +28,12 @@ m = SDPModel(
         return 5.0 * control[p]
     end
     constraints!(sp) do state_in, control, noise
-        all([
+        return all([
             control[p] + control[y] >= 6,
-            state_in[x] + noise[rainfall] - control[y] >= 0
+            state_in[x] + noise[rainfall] - control[y] >= 0,
         ])
     end
 end
 
-solve(m, realisation=WaitAndSee, print_level=0)
-@test DynamicProgramming.getbound(m,1,x=0) == 10
+solve(m, realisation = WaitAndSee, print_level = 0)
+@test DynamicProgramming.getbound(m, 1, x = 0) == 10

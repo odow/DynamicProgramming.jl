@@ -25,9 +25,9 @@
 using DynamicProgramming, Test
 
 m = SDPModel(
-        stages = 4, # four downs
-        sense  = :Max
-            ) do sp, t
+    stages = 4, # four downs
+    sense = :Max,
+) do sp, t
     p, q, λᵣ, λₚ = 0.4, 0.05, 3, 10
     # Poisson probability mass function
     pmf(k, λ) = convert(Float64, (λ^k) * exp(-λ) / factorial(BigInt(k)))
@@ -35,13 +35,13 @@ m = SDPModel(
     # we could instead make the noise terms linspace(0, 1, N) and associate
     # each random value with a meter.
     YARDS = 0:50
-    run_prob  = pmf.(YARDS, λᵣ)  # compute probability
+    run_prob = pmf.(YARDS, λᵣ)  # compute probability
     run_prob ./= sum(run_prob)   # normalize
     pass_prob = pmf.(YARDS, λₚ)  # compute probability
     pass_prob ./= sum(pass_prob) # normalize
 
     @states(sp, begin
-        yards    in 0:100
+        yards in 0:100
         has_ball in [0, 1]
     end)
 
@@ -49,11 +49,17 @@ m = SDPModel(
         play in [:none, :run, :pass]
     end)
 
-    @noises(sp, begin
-        pass_result in DiscreteDistribution([:complete, :interception, :incomplete], [p, q, 1-p-q])
-        pass_yard   in DiscreteDistribution(YARDS, pass_prob)
-        run_yard    in DiscreteDistribution(YARDS, run_prob)
-    end)
+    @noises(
+        sp,
+        begin
+            pass_result in DiscreteDistribution(
+                [:complete, :interception, :incomplete],
+                [p, q, 1 - p - q],
+            )
+            pass_yard in DiscreteDistribution(YARDS, pass_prob)
+            run_yard in DiscreteDistribution(YARDS, run_prob)
+        end
+    )
 
     dynamics!(sp) do y, state, control, noise
         yards_play, possession = 0, true
@@ -74,20 +80,20 @@ m = SDPModel(
     end
 
     terminalobjective!(sp) do state
-        state[yards] > 99.5 ? 1.0 : 0.0
+        return state[yards] > 99.5 ? 1.0 : 0.0
     end
 end
 
-@time solve(m, realisation=HereAndNow)
+@time solve(m, realisation = HereAndNow)
 win_probability = [
-    DynamicProgramming.getbound(m, d, has_ball=1.0, yards=i)
-    for i in 0:99, d in 1:4
+    DynamicProgramming.getbound(m, d, has_ball = 1.0, yards = i) for
+    i in 0:99, d in 1:4
 ]
 for i in 1:size(win_probability, 1)-1
     for j in 1:size(win_probability, 2)-1
         # win probability increases with more downs
-        @test win_probability[i,j] >= win_probability[i,j+1] - 1e-4
+        @test win_probability[i, j] >= win_probability[i, j+1] - 1e-4
         # win probability increases closer to end-zone
-        @test win_probability[i,j] <= win_probability[i+1,j] + 1e-4
+        @test win_probability[i, j] <= win_probability[i+1, j] + 1e-4
     end
 end

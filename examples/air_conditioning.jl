@@ -22,15 +22,8 @@
 using DynamicProgramming, Test, Random
 
 function airconditioningmodel()
-    m = SDPModel(
-                 stages = 3,
-                  sense = :Max,
-                            ) do sp, stage
-        DEMAND = [
-            [100],
-            [100, 300],
-            [100, 300]
-        ]
+    m = SDPModel(stages = 3, sense = :Max) do sp, stage
+        DEMAND = [[100], [100, 300], [100, 300]]
 
         @states(sp, begin
             # number of units
@@ -43,7 +36,7 @@ function airconditioningmodel()
             production in [0, 100, 200]
             # number of units produced during overtime production
             # circumstances
-            overtime   in [0, 100, 200, 300]
+            overtime in [0, 100, 200, 300]
         end)
 
         @noises(sp, begin
@@ -56,12 +49,12 @@ function airconditioningmodel()
         end
 
         constraints!(sp) do x, u, w
-            0 <= x[storage] + u[production] + u[overtime] - w[demand] <= 300
+            return 0 <= x[storage] + u[production] + u[overtime] - w[demand] <= 300
         end
     end
 end
 
 Random.seed!(1234)
 m = airconditioningmodel()
-solve(m, realisation=WaitAndSee)
-@test isapprox(DynamicProgramming.getbound(m, 1, storage=0), -62_500.0)
+solve(m, realisation = WaitAndSee)
+@test isapprox(DynamicProgramming.getbound(m, 1, storage = 0), -62_500.0)

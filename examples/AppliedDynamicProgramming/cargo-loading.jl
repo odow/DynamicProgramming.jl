@@ -21,9 +21,9 @@
 
 using DynamicProgramming, Test
 
-m = SDPModel(sense=:Max, stages=8) do sp, t
+m = SDPModel(sense = :Max, stages = 8) do sp, t
     weights = [20, 18, 14, 12, 10, 16, 22, 24]
-    values  = [72, 60, 40, 27, 20, 50, 85, 96]
+    values = [72, 60, 40, 27, 20, 50, 85, 96]
     @states(sp, begin
         remaining_space in 0.0:1.0:100.0
     end)
@@ -35,24 +35,24 @@ m = SDPModel(sense=:Max, stages=8) do sp, t
         return values[t] * u[item]
     end
     constraints!(sp) do x, u, w
-        x[remaining_space] >= weights[t] * u[item]
+        return x[remaining_space] >= weights[t] * u[item]
     end
 end
 
-solve(m, print_level=0)
+solve(m, print_level = 0)
 
 solutions = Dict(
-    100 => (384, [(8,4)]),
-    95  => (373, [(7,1), (8,3)]),
-    91  => (351, [(7,3), (8,1)]),
-    89  => (340, [(7,4)]),
-    87  => (328, [(3,1), (8,3)]),
-    85  => (317, [(3,1), (7,1), (8,2)]),
-    83  => (308, [(5,1), (8,3)]),
-    81  => (297, [(5,1), (7,1), (8,2)])
+    100 => (384, [(8, 4)]),
+    95 => (373, [(7, 1), (8, 3)]),
+    91 => (351, [(7, 3), (8, 1)]),
+    89 => (340, [(7, 4)]),
+    87 => (328, [(3, 1), (8, 3)]),
+    85 => (317, [(3, 1), (7, 1), (8, 2)]),
+    83 => (308, [(5, 1), (8, 3)]),
+    81 => (297, [(5, 1), (7, 1), (8, 2)]),
 )
 for (z, sol) in solutions
-    s = simulate(m, 1, remaining_space=z)
+    s = simulate(m, 1, remaining_space = z)
     @test s[:objective][1] == sol[1]
     for (i, v) in sol[2]
         @test s[:item][i] == v

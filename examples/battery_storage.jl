@@ -16,18 +16,14 @@ using DynamicProgramming, Random
 @everywhere begin
     Random.seed!(1111)
     const discharge_efficiency = 0.97
-    const charge_efficiency    = 0.98
-    const cost   = rand(50)
+    const charge_efficiency = 0.98
+    const cost = rand(50)
     const demand = rand(50)
 end
 
-m = SDPModel(
-        stages = 50,
-        sense  = :Min
-            ) do sp, t
-
+m = SDPModel(stages = 50, sense = :Min) do sp, t
     @states(sp, begin
-        storage in 0.:0.01:1
+        storage in 0.0:0.01:1
     end)
 
     @controls(sp, begin
@@ -41,59 +37,82 @@ m = SDPModel(
 
     dynamics!(sp) do y, x, u, w
         # update state
-        y[storage] = x[storage] + charge_efficiency * u[charge] - (demand[t] / discharge_efficiency + w[xi])
+        y[storage] =
+            x[storage] + charge_efficiency * u[charge] -
+            (demand[t] / discharge_efficiency + w[xi])
 
         # return stage objective
         return cost[t] * u[charge] + 2 * abs(min(0, y[storage]))
     end
 
     constraints!(sp) do x, u, w
-        x[storage] + charge_efficiency * u[charge] - (demand[t] / discharge_efficiency + w[xi]) <= 1
+        return x[storage] + charge_efficiency * u[charge] -
+               (demand[t] / discharge_efficiency + w[xi]) <= 1
     end
-
 end
 
 println("Expected Value")
-@time solve(m, realisation=ExpectedValue)
+@time solve(m, realisation = ExpectedValue)
 
-@time results = simulate(m,
+@time results = simulate(
+    m,
     200,          # number of simulations
-    storage = 0.5 # initial storage
+    storage = 0.5, # initial storage
 )
 
-@visualise(results, t, i, begin
-    results[:objective][i], (title="Objective",                    ylabel="\$")
-    results[:storage][t,i], (title="Storage Level of the Battery", ylabel="")
-    results[:charge][t,i],  (title="Charging Decision",            ylabel="")
-    results[:xi][t,i],      (title="Random Noise",                 ylabel="")
-end)
+@visualise(
+    results,
+    t,
+    i,
+    begin
+        results[:objective][i], (title = "Objective", ylabel = "\$")
+        results[:storage][t, i],
+        (title = "Storage Level of the Battery", ylabel = "")
+        results[:charge][t, i], (title = "Charging Decision", ylabel = "")
+        results[:xi][t, i], (title = "Random Noise", ylabel = "")
+    end
+)
 
 println("Here and Now")
-@time solve(m, realisation=HereAndNow)
+@time solve(m, realisation = HereAndNow)
 
-@time results = simulate(m,
+@time results = simulate(
+    m,
     200,          # number of simulations
-    storage = 0.5 # initial storage
+    storage = 0.5, # initial storage
 )
 
-@visualise(results, t, i, begin
-    results[:objective][i], (title="Objective",                    ylabel="\$")
-    results[:storage][t,i], (title="Storage Level of the Battery", ylabel="")
-    results[:charge][t,i],  (title="Charging Decision",            ylabel="")
-    results[:xi][t,i],      (title="Random Noise",                 ylabel="")
-end)
+@visualise(
+    results,
+    t,
+    i,
+    begin
+        results[:objective][i], (title = "Objective", ylabel = "\$")
+        results[:storage][t, i],
+        (title = "Storage Level of the Battery", ylabel = "")
+        results[:charge][t, i], (title = "Charging Decision", ylabel = "")
+        results[:xi][t, i], (title = "Random Noise", ylabel = "")
+    end
+)
 
 println("Wait and See")
-@time solve(m, realisation=WaitAndSee)
+@time solve(m, realisation = WaitAndSee)
 
-@time results = simulate(m,
+@time results = simulate(
+    m,
     200,          # number of simulations
-    storage = 0.5 # initial storage
+    storage = 0.5, # initial storage
 )
 
-@visualise(results, t, i, begin
-    results[:objective][i], (title="Objective",                    ylabel="\$")
-    results[:storage][t,i], (title="Storage Level of the Battery", ylabel="")
-    results[:charge][t,i],  (title="Charging Decision",            ylabel="")
-    results[:xi][t,i],      (title="Random Noise",                 ylabel="")
-end)
+@visualise(
+    results,
+    t,
+    i,
+    begin
+        results[:objective][i], (title = "Objective", ylabel = "\$")
+        results[:storage][t, i],
+        (title = "Storage Level of the Battery", ylabel = "")
+        results[:charge][t, i], (title = "Charging Decision", ylabel = "")
+        results[:xi][t, i], (title = "Random Noise", ylabel = "")
+    end
+)

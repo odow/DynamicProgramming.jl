@@ -53,13 +53,13 @@ Inreasing values of `lambda` are less risk averse (more weight on expecattion)
 
 A risk measure to use
 """
-function NestedCVaR(; lambda=1., beta=0.5)
+function NestedCVaR(; lambda = 1.0, beta = 0.5)
     if beta < 1e-10
         warn("Beta is very small.")
     end
-    NestedCVaRType(lambda, beta)
+    return NestedCVaRType(lambda, beta)
 end
-Expectation() = NestedCVaRType(1., 1.)
+Expectation() = NestedCVaRType(1.0, 1.0)
 
 """
 A storage container for weighted probabilities
@@ -68,7 +68,12 @@ struct WeightedProbability{T}
     value::T
     probability::Float64
 end
-Base.isless(x::WeightedProbability{T}, y::WeightedProbability{T}) where {T} = isless(x.value, y.value)
+function Base.isless(
+    x::WeightedProbability{T},
+    y::WeightedProbability{T},
+) where {T}
+    return isless(x.value, y.value)
+end
 
 """
 Sample from a vector of WeightedProbability
@@ -87,15 +92,23 @@ end
 """
 Conversion helpers for Vectors of WeightedProbability
 """
-function Base.convert(::Type{Vector{WeightedProbability{T}}}, x::V) where {T, V<:AbstractVector}
+function Base.convert(
+    ::Type{Vector{WeightedProbability{T}}},
+    x::V,
+) where {T,V<:AbstractVector}
     y = WeightedProbability{T}[]
-    prob = 1. / length(x)
+    prob = 1.0 / length(x)
     for xi in x
         push!(y, WeightedProbability(xi, prob))
     end
-    y
+    return y
 end
-Base.convert(::Type{Vector{WeightedProbability{T}}}, x::Vector{WeightedProbability{T}}) where {T} = x
+function Base.convert(
+    ::Type{Vector{WeightedProbability{T}}},
+    x::Vector{WeightedProbability{T}},
+) where {T}
+    return x
+end
 
 """
 Some helper functions to return type
@@ -106,26 +119,33 @@ getType(x::AbstractVector{WeightedProbability{T}}) where {T} = T
 """
 A GenericSpace is a space defined by discrete points along N dimensions.
 """
-struct GenericSpace{T, T2, N}
+struct GenericSpace{T,T2,N}
     dimensions::T                             # list of dimensions
-    indices::Tuple{Vararg{UnitRange{Int}, N}} # List of indices
-    nameindices::Dict{Symbol, Int}            # a reference naming dict
+    indices::Tuple{Vararg{UnitRange{Int},N}} # List of indices
+    nameindices::Dict{Symbol,Int}            # a reference naming dict
     minimum::T2 # Minimum values
     maximum::T2 # Minimum values
-    bounded::Tuple{Vararg{Bool, N}}
+    bounded::Tuple{Vararg{Bool,N}}
 end
 
-GenericSpace(;kwargs...) = GenericSpace(v->v;kwargs...)
-GenericSpace(T::DataType; kwargs...) = GenericSpace(v->convert(Vector{T}, v); kwargs...)
-GenericSpace(::Type{WeightedProbability}; kwargs...) = GenericSpace(v->convert(Vector{WeightedProbability{getType(v)}}, v); kwargs...)
-function GenericSpace(conversion::Function;kwargs...)
-    nameindices = Dict{Symbol, Int}()
-    dims         = Any[]
-    indices      = UnitRange{Int}[]
+GenericSpace(; kwargs...) = GenericSpace(v -> v; kwargs...)
+function GenericSpace(T::DataType; kwargs...)
+    return GenericSpace(v -> convert(Vector{T}, v); kwargs...)
+end
+function GenericSpace(::Type{WeightedProbability}; kwargs...)
+    return GenericSpace(
+        v -> convert(Vector{WeightedProbability{getType(v)}}, v);
+        kwargs...,
+    )
+end
+function GenericSpace(conversion::Function; kwargs...)
+    nameindices = Dict{Symbol,Int}()
+    dims = Any[]
+    indices = UnitRange{Int}[]
     mins = Any[]
     maxs = Any[]
     bounded = Bool[]
-    j=1
+    j = 1
     for (key, value) in kwargs
         nameindices[key] = j
         push!(dims, conversion(value))
@@ -133,9 +153,20 @@ function GenericSpace(conversion::Function;kwargs...)
         push!(mins, minimum(value))
         push!(maxs, maximum(value))
         push!(bounded, false)
-        j+=1
+        j += 1
     end
-    GenericSpace{typeof(tuple(dims...)), typeof(tuple(mins...)), length(dims)}(tuple(dims...), tuple(indices...), nameindices, tuple(mins...), tuple(maxs...), tuple(bounded...))
+    return GenericSpace{
+        typeof(tuple(dims...)),
+        typeof(tuple(mins...)),
+        length(dims),
+    }(
+        tuple(dims...),
+        tuple(indices...),
+        nameindices,
+        tuple(mins...),
+        tuple(maxs...),
+        tuple(bounded...),
+    )
 end
 
 Base.length(gs::GenericSpace) = length(gs.dimensions)
@@ -148,7 +179,7 @@ mutable struct Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
     statespace::GenericSpace{T,T2,M}
     controlspace::U
     noisespace::V
-    bellmansurface::Array{Float64, M}
+    bellmansurface::Array{Float64,M}
     interpolatedsurface::Interpolations.GriddedInterpolation #{Float64, M, Float64, Interpolations.Gridded{Interpolations.Linear}, T, 0}
     dynamics!::Function                 # dynamics!(x', x, u, w)
     reward::Function                    # r(x, u, w)
@@ -165,37 +196,40 @@ function Stage(M, tmpdict)
         error("Must specify reward function")
     end
 
-    Stage(
+    return Stage(
         tmpdict[:statespace],
         tmpdict[:controlspace],
         tmpdict[:noisespace],
-        Array{Float64}(undef, tuple(map(length, tmpdict[:statespace].dimensions)...)),
-        interpolate(tuple(fill(Float64[], M)...), Array{Float64}(undef, tuple(zeros(Int, M)...)), Gridded(Linear())),
+        Array{Float64}(
+            undef,
+            tuple(map(length, tmpdict[:statespace].dimensions)...),
+        ),
+        interpolate(
+            tuple(fill(Float64[], M)...),
+            Array{Float64}(undef, tuple(zeros(Int, M)...)),
+            Gridded(Linear()),
+        ),
         tmpdict[:dynamics],
         tmpdict[:reward],
         tmpdict[:terminalcost],
-        tmpdict[:isfeasible]
+        tmpdict[:isfeasible],
     )
 end
 
-mutable struct SDPModel{T<:Stage, N}
-    stages::Tuple{Vararg{T, N}}
+mutable struct SDPModel{T<:Stage,N}
+    stages::Tuple{Vararg{T,N}}
     sense::Type{<:ModelSense}
 end
 
-function SDPModel(buildstage!::Function;
-    stages::Int   = 1,
-    sense::Symbol = :Max
-    )
-
-    modsense = (sense==:Max ? Maximisation : Minimisation)
+function SDPModel(buildstage!::Function; stages::Int = 1, sense::Symbol = :Max)
+    modsense = (sense == :Max ? Maximisation : Minimisation)
     outstages = Stage[]
     for t in 1:stages
-        tmpdict = Dict{Symbol, Any}(
-            :noisespace   => GenericSpace(),
-            :terminalcost => (x)->0.,
-            :isfeasible => (x,u,w)->true,
-            :reward => (x,u,w) -> 0.0
+        tmpdict = Dict{Symbol,Any}(
+            :noisespace => GenericSpace(),
+            :terminalcost => (x) -> 0.0,
+            :isfeasible => (x, u, w) -> true,
+            :reward => (x, u, w) -> 0.0,
         )
 
         buildstage!(tmpdict, t)
@@ -210,7 +244,7 @@ function SDPModel(buildstage!::Function;
         tmpdict[:dynamics](y, x, u, w)
         tmpdict[:reward](x, u, w)
         # ====================
-        
+
         sp = Stage(length(tmpdict[:statespace]), tmpdict)
         push!(outstages, sp)
     end
