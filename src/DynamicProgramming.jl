@@ -10,17 +10,26 @@ module DynamicProgramming
 
 using Interpolations, JSON, Printf, Distributed, LinearAlgebra
 
-export
-    SDPModel, solve, simulate,
+export SDPModel,
+    solve,
+    simulate,
     # macros
-    @states, @controls, @noises, @visualise,
+    @states,
+    @controls,
+    @noises,
+    @visualise,
     # model functions
-    dynamics!, terminalobjective!, constraints!,
+    dynamics!,
+    terminalobjective!,
+    constraints!,
     DiscreteDistribution,
     # risk measures
-    Expectation, NestedCVaR,
+    Expectation,
+    NestedCVaR,
     # uncertainty realisations
-    WaitAndSee, HereAndNow, ExpectedValue
+    WaitAndSee,
+    HereAndNow,
+    ExpectedValue
 
 @deprecate WeightedDist DiscreteDistribution
 

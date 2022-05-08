@@ -12,15 +12,23 @@
 # See http://github.com/JuliaOpt/JuMP.jl
 #############################################################################
 
-macro deprecate_macro(oldmacro,newmacro)
-    oldmac = Symbol(string("@",oldmacro))
-    newmac = Symbol(string("@",newmacro))
-    s = string(oldmac," is deprecated, use ", newmac, " instead.")
-    depwarn = :(Base.depwarn($s,$(Base.Meta.quot(oldmac))))
+macro deprecate_macro(oldmacro, newmacro)
+    oldmac = Symbol(string("@", oldmacro))
+    newmac = Symbol(string("@", newmacro))
+    s = string(oldmac, " is deprecated, use ", newmac, " instead.")
+    depwarn = :(Base.depwarn($s, $(Base.Meta.quot(oldmac))))
     @eval macro $oldmacro(args...)
-        return Expr(:block, $depwarn, Expr(:macrocall, $(Base.Meta.quot(newmac)), [esc(x) for x in args]...))
+        return Expr(
+            :block,
+            $depwarn,
+            Expr(
+                :macrocall,
+                $(Base.Meta.quot(newmac)),
+                [esc(x) for x in args]...,
+            ),
+        )
     end
-    eval(Expr(:export,oldmac))
+    eval(Expr(:export, oldmac))
     return
 end
 

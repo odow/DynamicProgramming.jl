@@ -29,36 +29,35 @@
 
 using DynamicProgramming, Test
 
-m = SDPModel(sense=:Min, stages=10) do sp, t
-    weights = [3,5,2,5,6,2,4,7,5,3]
-    sizes   = [5,4,7,4,6,2,5,7,3,4]
-    costs   = [22,22,12,6,12,2,12,12,22,4]
-    lambda  = [1,1,4,4,1,4,1,1,1,3]
+m = SDPModel(sense = :Min, stages = 10) do sp, t
+    weights = [3, 5, 2, 5, 6, 2, 4, 7, 5, 3]
+    sizes = [5, 4, 7, 4, 6, 2, 5, 7, 3, 4]
+    costs = [22, 22, 12, 6, 12, 2, 12, 12, 22, 4]
+    lambda = [1, 1, 4, 4, 1, 4, 1, 1, 1, 3]
     @states(sp, begin
         weight in 0.0:1.0:30.0
-        size   in 0.0:1.0:30.0
+        size in 0.0:1.0:30.0
     end)
     @controls(sp, begin
         quantity in 0.0:1.0:3.0
     end)
-    P(k,i) = exp(-lambda[i]) * lambda[i]^k / factorial(k)
+    P(k, i) = exp(-lambda[i]) * lambda[i]^k / factorial(k)
 
     dynamics!(sp) do y, x, u, w
         y[weight] = x[weight] - weights[t] * u[quantity]
-        y[size]   = x[size] - sizes[t] * u[quantity]
+        y[size] = x[size] - sizes[t] * u[quantity]
         return costs[t] * sum(
-            (k - u[quantity]) * P(k, t)
-            for k in Int(u[quantity]+1):10
+            (k - u[quantity]) * P(k, t) for k in Int(u[quantity] + 1):10
         )
     end
     constraints!(sp) do x, u, w
-        all([
+        return all([
             x[weight] >= weights[t] * u[quantity],
-            x[size]   >= sizes[t] * u[quantity]
+            x[size] >= sizes[t] * u[quantity],
         ])
     end
 end
 
-solve(m, print_level=0)
-s = simulate(m, 1, weight=30.0, size=30.0)
-@test isapprox(s[:objective][1], 122.37, atol=1e-2)
+solve(m, print_level = 0)
+s = simulate(m, 1, weight = 30.0, size = 30.0)
+@test isapprox(s[:objective][1], 122.37, atol = 1e-2)

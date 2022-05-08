@@ -17,14 +17,10 @@ using DynamicProgramming
     const transaction_cost = 0.01
 end
 
-m = SDPModel(
-    stages   = 28,
-    sense    = :Max
-            ) do sp, t
-
+m = SDPModel(stages = 28, sense = :Max) do sp, t
     @states(sp, begin
-        contracts  in linspace(0, 1.5, 16)
-        price      in linspace(3, 9, 10)
+        contracts in linspace(0, 1.5, 16)
+        price in linspace(3, 9, 10)
         production in linspace(0, 1.5, 16)
     end)
 
@@ -34,49 +30,58 @@ m = SDPModel(
 
     @noises(sp, begin
         alpha in sampled_errors
-        beta  in linspace(0., 0.05, 5)
+        beta in linspace(0.0, 0.05, 5)
     end)
 
     dynamics!(sp) do y, x, u, w
         # contracts at end of period is incremented by how many we buy
-        y[contracts]  = x[contracts] + u[buy]
+        y[contracts] = x[contracts] + u[buy]
         # the Futures price follows a log(AR(1)) process with decreasing variance
-        y[price]      = min(9, max(3, 1.01*exp(log(x[price]) + σ²[t]*w[alpha])))
+        y[price] =
+            min(9, max(3, 1.01 * exp(log(x[price]) + σ²[t] * w[alpha])))
         # Production
         y[production] = x[production] + w[beta]
 
         # return stage objective
-        return u[buy]*x[price] - transaction_cost*abs(u[buy])
+        return u[buy] * x[price] - transaction_cost * abs(u[buy])
     end
 
     terminalobjective!(sp) do x
-            (x[production] - x[contracts]) * x[price]
+        return (x[production] - x[contracts]) * x[price]
     end
 
     constraints!(sp) do x, u, w
-            x[contracts] + u[buy] <= 1.2
+        return x[contracts] + u[buy] <= 1.2
     end
-
 end
 
-@time solve(m,
-    realisation=WaitAndSee,
-    riskmeasure=NestedCVaR(beta=0.5, lambda=0.5)
+@time solve(
+    m,
+    realisation = WaitAndSee,
+    riskmeasure = NestedCVaR(beta = 0.5, lambda = 0.5),
 )
 
-@time results = simulate(m,
+@time results = simulate(
+    m,
     500,              # number of simulations
-    contracts  = 0,   # Initial states
-    price      = 4.5, #
-    production = 0.   #
+    contracts = 0,   # Initial states
+    price = 4.5, #
+    production = 0.0,   #
 )
 
-@visualise(results, t, i, begin
-    results[:objective][i],    (title="Objective",           ylabel="\$")
-    results[:contracts][t,i],  (title="Number of Contracts", ylabel="Units")
-    results[:price][t,i],      (title="Price",               ylabel="\$/Units")
-    results[:production][t,i], (title="Production to Date",  ylabel="Units")
-    results[:buy][t,i],        (title="Quantity to buy",     ylabel="Units")
-    results[:alpha][t,i],      (title="Alpha Noise")
-    results[:beta][t,i],       (title="Beta Noise")
-end)
+@visualise(
+    results,
+    t,
+    i,
+    begin
+        results[:objective][i], (title = "Objective", ylabel = "\$")
+        results[:contracts][t, i],
+        (title = "Number of Contracts", ylabel = "Units")
+        results[:price][t, i], (title = "Price", ylabel = "\$/Units")
+        results[:production][t, i],
+        (title = "Production to Date", ylabel = "Units")
+        results[:buy][t, i], (title = "Quantity to buy", ylabel = "Units")
+        results[:alpha][t, i], (title = "Alpha Noise")
+        results[:beta][t, i], (title = "Beta Noise")
+    end
+)

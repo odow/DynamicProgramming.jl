@@ -12,10 +12,9 @@ function getbound(m, stage; kwargs...)
             error("State not found")
         else
             state[stage.statespace.nameindices[key]] = val
-
         end
     end
-    stage.interpolatedsurface(state...)
+    return stage.interpolatedsurface(state...)
 end
 """
 Test if trial solution is better than the incumbent
@@ -42,50 +41,73 @@ constraints!(f::Function, sp) = constraints!(sp, f)
 Function for adding states in Model definition
 """
 function addstates!(sp; kwargs...)
-    sp[:statespace] = GenericSpace(Float64;kwargs...)
+    return sp[:statespace] = GenericSpace(Float64; kwargs...)
 end
 
 """
 Function for adding controls in Model definition
 """
 function addcontrols!(sp; kwargs...)
-    sp[:controlspace] = GenericSpace(;kwargs...)
+    return sp[:controlspace] = GenericSpace(; kwargs...)
 end
 
 """
 Function for adding noises in Model definition
 """
 function addnoises!(sp; kwargs...)
-    sp[:noisespace] = GenericSpace(WeightedProbability;kwargs...)
+    return sp[:noisespace] = GenericSpace(WeightedProbability; kwargs...)
 end
 
 """
 Interpolate the bellman surface using Interpolations.jl
 """
 function interpolatesurface!(stage)
-    stage.interpolatedsurface = interpolate(stage.statespace.dimensions, stage.bellmansurface, Gridded(Linear()))
+    return stage.interpolatedsurface = interpolate(
+        stage.statespace.dimensions,
+        stage.bellmansurface,
+        Gridded(Linear()),
+    )
 end
 
 """
 Calculate the end of horizon reward as current stage cost + terminal cost
 """
-function calculatereward(::Type{TerminalReward}, m, t::Int, stage, newstate, state, control, noise)
+function calculatereward(
+    ::Type{TerminalReward},
+    m,
+    t::Int,
+    stage,
+    newstate,
+    state,
+    control,
+    noise,
+)
     return stage.reward(state, control, noise) + stage.terminalcost(newstate)
 end
 
 function calculatereward(::Type{TerminalReward}, m, t, newstate, reward)
-    reward + m.stages[t].terminalcost(newstate)
+    return reward + m.stages[t].terminalcost(newstate)
 end
 
 """
 Calculate the middle of horizon reward as current stage cost + interpolated value to go
 """
-function calculatereward(::Type{InterpolatedReward}, m, t, stage, newstate, state, control, noise)
-    stage.reward(state, control, noise) + getinterpolatedvalue(m.stages[t+1], newstate)
+function calculatereward(
+    ::Type{InterpolatedReward},
+    m,
+    t,
+    stage,
+    newstate,
+    state,
+    control,
+    noise,
+)
+    return stage.reward(state, control, noise) +
+           getinterpolatedvalue(m.stages[t+1], newstate)
 end
 
 function calculatereward(::Type{InterpolatedReward}, m, t, newstate, reward)
-    reward + getinterpolatedvalue(m.stages[t+1], newstate)
+    return reward + getinterpolatedvalue(m.stages[t+1], newstate)
 end
 
 """
@@ -96,17 +118,22 @@ getinterpolatedvalue(stage, state) = stage.interpolatedsurface(state...)
 """
 Create an array of WeightedProbability
 """
-function DiscreteDistribution(observations::AbstractVector{T}, probabilities::AbstractVector) where {T}
+function DiscreteDistribution(
+    observations::AbstractVector{T},
+    probabilities::AbstractVector,
+) where {T}
     @assert length(observations) == length(probabilities)
-    if !isapprox(sum(probabilities) , 1.0)
-        warn("Weight vector is not normalised. Sum = $(sum(probabilities)). Normalising.")
+    if !isapprox(sum(probabilities), 1.0)
+        warn(
+            "Weight vector is not normalised. Sum = $(sum(probabilities)). Normalising.",
+        )
         probabilities ./= sum(probabilities)
     end
     y = WeightedProbability{T}[]
     for (xi, pi) in zip(observations, probabilities)
         push!(y, WeightedProbability(xi, pi))
     end
-    y
+    return y
 end
 
 """
@@ -114,7 +141,8 @@ Risk measure for nested CVaR
 """
 function NestedCVaR(isminimisation::Bool, beta, lambda)
     if lambda < 0.999
-        return (x,p) -> lambda * dot(x,p) + (1 - lambda) * CVaR(x, p, beta, isminimisation)
+        return (x, p) ->
+            lambda * dot(x, p) + (1 - lambda) * CVaR(x, p, beta, isminimisation)
     else
         return dot
     end
@@ -125,27 +153,42 @@ NestedCVaR(::Type{Maximisation}, beta, lambda) = NestedCVaR(false, beta, lambda)
 """
 Calculate CVaR of array
 """
-function CVaR(x::AbstractVector{Float64},  p::AbstractVector{Float64}, beta::Float64, isminimisation::Bool)
+function CVaR(
+    x::AbstractVector{Float64},
+    p::AbstractVector{Float64},
+    beta::Float64,
+    isminimisation::Bool,
+)
     @assert length(x) == length(p)
-    q = 0.
-    cp = 0.
-    cvar = 0.
-    for i in sortperm(x, rev=isminimisation)
-            if q <= beta
-                cp = min(p[i], beta-q)
-                q += cp
-                cvar += cp * x[i]
-            else
-                break
-            end
+    q = 0.0
+    cp = 0.0
+    cvar = 0.0
+    for i in sortperm(x, rev = isminimisation)
+        if q <= beta
+            cp = min(p[i], beta - q)
+            q += cp
+            cvar += cp * x[i]
+        else
+            break
+        end
     end
-    cvar / beta
+    return cvar / beta
 end
 
 """
 Here and Now models choose an action, then observe the noise.
 """
-function _innerloop(::Type{HereAndNow}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
+function _innerloop(
+    ::Type{HereAndNow},
+    rewardtype::Type{<:RewardType},
+    m::SDPModel{T,N},
+    t::Int,
+    state,
+    newstate,
+    riskmeasure::Function,
+    outcomes::Vector{Float64},
+    probabilities::Vector{Float64},
+) where {T,N}
     stage = m.stages[t]
     bestobj = worstcase(m.sense)
     reward = 0.0
@@ -154,9 +197,16 @@ function _innerloop(::Type{HereAndNow}, rewardtype::Type{<:RewardType}, m::SDPMo
         for noise in product(stage.noisespace)
             prob = cumulateprobability(noise)
             if stage.isfeasible(state, control, noise)
-                reward = stage.dynamics!(newstate, state, control, noise)::Float64
+                reward =
+                    stage.dynamics!(newstate, state, control, noise)::Float64
                 if withinbounds(newstate, stage.statespace)
-                    outcomes[n] = calculatereward(rewardtype, m, t, newstate, reward)::Float64
+                    outcomes[n] = calculatereward(
+                        rewardtype,
+                        m,
+                        t,
+                        newstate,
+                        reward,
+                    )::Float64
                 else
                     outcomes[n] = worstcase(m.sense)
                 end
@@ -178,14 +228,23 @@ function cumulateprobability(noise)
     for i in noise
         prob *= i.probability
     end
-    prob::Float64
+    return prob::Float64
 end
 """
 Wait and see models observe the noise, then choose the best control.
 The value is the expectation of taking those controls
 """
-function _innerloop(::Type{WaitAndSee}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
-
+function _innerloop(
+    ::Type{WaitAndSee},
+    rewardtype::Type{<:RewardType},
+    m::SDPModel{T,N},
+    t::Int,
+    state,
+    newstate,
+    riskmeasure::Function,
+    outcomes::Vector{Float64},
+    probabilities::Vector{Float64},
+) where {T,N}
     stage = m.stages[t]
     n = 1
     reward = 0.0
@@ -195,9 +254,16 @@ function _innerloop(::Type{WaitAndSee}, rewardtype::Type{<:RewardType}, m::SDPMo
 
         for control in product(stage.controlspace)
             if stage.isfeasible(state, control, noise)
-                reward = stage.dynamics!(newstate, state, control, noise)::Float64
+                reward =
+                    stage.dynamics!(newstate, state, control, noise)::Float64
                 if withinbounds(newstate, stage.statespace)
-                    tmp_obj = calculatereward(rewardtype, m, t, newstate, reward)::Float64
+                    tmp_obj = calculatereward(
+                        rewardtype,
+                        m,
+                        t,
+                        newstate,
+                        reward,
+                    )::Float64
                     if comparison(m.sense, tmp_obj, bestobj)
                         bestobj = tmp_obj::Float64
                     end
@@ -217,38 +283,51 @@ function _innerloop(::Type{WaitAndSee}, rewardtype::Type{<:RewardType}, m::SDPMo
 end
 
 function expectedvalue(x)
-    ev = 0.
+    ev = 0.0
     for i in x
         ev += i.value * i.probability
     end
-    ev
+    return ev
 end
 """
 ExpectedValue problem
 """
-function _innerloop(::Type{ExpectedValue}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
+function _innerloop(
+    ::Type{ExpectedValue},
+    rewardtype::Type{<:RewardType},
+    m::SDPModel{T,N},
+    t::Int,
+    state,
+    newstate,
+    riskmeasure::Function,
+    outcomes::Vector{Float64},
+    probabilities::Vector{Float64},
+) where {T,N}
     stage = m.stages[t]
-    noise = tuple([expectedvalue(dim) for dim in stage.noisespace.dimensions]...)
+    noise =
+        tuple([expectedvalue(dim) for dim in stage.noisespace.dimensions]...)
     bestobj = worstcase(m.sense)
     reward = 0.0
     for control in product(stage.controlspace)
         if stage.isfeasible(state, control, noise)
             reward = stage.dynamics!(newstate, state, control, noise)
             if withinbounds(newstate, stage.statespace)
-                tmp_obj = calculatereward(rewardtype, m, t, newstate, reward)::Float64
+                tmp_obj =
+                    calculatereward(rewardtype, m, t, newstate, reward)::Float64
                 if comparison(m.sense, tmp_obj, bestobj)
                     bestobj = tmp_obj
                 end
             end
         end
     end
-    bestobj::Float64
+    return bestobj::Float64
 end
 
 function withinbounds(state, statespace)
-    for i=1:length(state)
+    for i in 1:length(state)
         if statespace.bounded[i]
-            if (state[i] < statespace.minimum[i]) || (state[i] > statespace.maximum[i])
+            if (state[i] < statespace.minimum[i]) ||
+               (state[i] > statespace.maximum[i])
                 return false
             end
         end
@@ -259,20 +338,48 @@ end
 """
 Solve end of horizon stage
 """
-solveterminal!(paralleltype, modtype, m::SDPModel{T, N},riskmeasure::Function) where {T, N} = solvestage!(paralleltype, modtype, TerminalReward, m, N, riskmeasure)
+function solveterminal!(
+    paralleltype,
+    modtype,
+    m::SDPModel{T,N},
+    riskmeasure::Function,
+) where {T,N}
+    return solvestage!(paralleltype, modtype, TerminalReward, m, N, riskmeasure)
+end
 
 """
 Solve stage
 """
-function solvestage!(::Type{<:Serial}, modtype, rewardtype::Type{<:RewardType}, m::SDPModel, t::Int,riskmeasure::Function)
+function solvestage!(
+    ::Type{<:Serial},
+    modtype,
+    rewardtype::Type{<:RewardType},
+    m::SDPModel,
+    t::Int,
+    riskmeasure::Function,
+)
     stage = m.stages[t]
     newstate = zeros(length(stage.statespace))
     outcomes = zeros(length(product(stage.noisespace)))
     probabilities = zeros(length(product(stage.noisespace)))
 
-    map!(state->_innerloop(modtype, rewardtype, m, t, state, newstate, riskmeasure, outcomes, probabilities), stage.bellmansurface, collect(product(stage.statespace)))
+    map!(
+        state -> _innerloop(
+            modtype,
+            rewardtype,
+            m,
+            t,
+            state,
+            newstate,
+            riskmeasure,
+            outcomes,
+            probabilities,
+        ),
+        stage.bellmansurface,
+        collect(product(stage.statespace)),
+    )
 
-    interpolatesurface!(stage)
+    return interpolatesurface!(stage)
 end
 
 function _innerloop(T, N, realisationtype, rewardtype, t, state, riskmeasure)
@@ -280,7 +387,17 @@ function _innerloop(T, N, realisationtype, rewardtype, t, state, riskmeasure)
     stage = mm.stages[t]
     outcomes = DynamicProgramming._outcomes::Vector{Float64}
     probabilities = DynamicProgramming._probabilities::Vector{Float64}
-    _innerloop(realisationtype, rewardtype, mm, t, state, zeros(length(stage.statespace)), riskmeasure, outcomes, probabilities)
+    return _innerloop(
+        realisationtype,
+        rewardtype,
+        mm,
+        t,
+        state,
+        zeros(length(stage.statespace)),
+        riskmeasure,
+        outcomes,
+        probabilities,
+    )
 end
 
 function pmap!(results, f, lst)
@@ -290,9 +407,9 @@ function pmap!(results, f, lst)
     i = 1
     # function to produce the next work item from the queue.
     # in this case it's just an index.
-    nextidx() = (idx=i; i+=1; idx)
+    nextidx() = (idx = i; i += 1; idx)
     @sync begin
-        for p=1:np
+        for p in 1:np
             if p != myid() || np == 1
                 @async begin
                     while true
@@ -308,18 +425,30 @@ function pmap!(results, f, lst)
     end
 end
 
-function solvestage!(::Type{Parallel}, modtype, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, riskmeasure::Function) where {T, N}
-    sendtoall(_probabilities=zeros(length(product(m.stages[t].noisespace))))
-    sendtoall(_outcomes=zeros(length(product(m.stages[t].noisespace))))
+function solvestage!(
+    ::Type{Parallel},
+    modtype,
+    rewardtype::RewardType,
+    m::SDPModel{T,N},
+    t::Int,
+    riskmeasure::Function,
+) where {T,N}
+    sendtoall(_probabilities = zeros(length(product(m.stages[t].noisespace))))
+    sendtoall(_outcomes = zeros(length(product(m.stages[t].noisespace))))
 
-    pmap!(m.stages[t].bellmansurface, state->_innerloop(T, N, modtype, rewardtype, t, state, riskmeasure), collect(product(m.stages[t].statespace)))
+    pmap!(
+        m.stages[t].bellmansurface,
+        state -> _innerloop(T, N, modtype, rewardtype, t, state, riskmeasure),
+        collect(product(m.stages[t].statespace)),
+    )
 
     interpolatesurface!(m.stages[t])
 
-    distribute_work_void!((A)->(
+    return distribute_work_void!(
+        (A) -> (
             (DynamicProgramming.m::SDPModel{T,N}).stages[t].interpolatedsurface = A
         ),
-        deepcopy(m.stages[t].interpolatedsurface)
+        deepcopy(m.stages[t].interpolatedsurface),
     )
 end
 
@@ -338,7 +467,7 @@ function sendto(p::Int, env; args...)
     end
 end
 
-function sendtoall(env=DynamicProgramming; args...)
+function sendtoall(env = DynamicProgramming; args...)
     nprocs() == 1 && return false
     for p in procs()
         sendto(p, env; args...)
@@ -349,17 +478,19 @@ end
 """
 Solve SDPModel
 """
-function solve(m::SDPModel;
-    realisation::Type{<:ModelType}=WaitAndSee,
-    riskmeasure::NestedCVaRType=Expectation(),
+function solve(
+    m::SDPModel;
+    realisation::Type{<:ModelType} = WaitAndSee,
+    riskmeasure::NestedCVaRType = Expectation(),
     solvetype = nprocs() > 3 ? Parallel : Serial,
-    print_level::Int = 3
-    )
+    print_level::Int = 3,
+)
     if solvetype == Parallel
         sendtoall(m = deepcopy(m))
     end
 
-    risk_measure_function = NestedCVaR(m.sense, riskmeasure.beta, riskmeasure.lambda)
+    risk_measure_function =
+        NestedCVaR(m.sense, riskmeasure.beta, riskmeasure.lambda)
     totaltime = [0.0]
     # solve final stage
     if print_level > 0
@@ -374,7 +505,14 @@ function solve(m::SDPModel;
     # backwards recursion
     for t in (length(m.stages)-1):-1:1
         start_time = time()
-        solvestage!(solvetype, realisation, InterpolatedReward, m, t, risk_measure_function)
+        solvestage!(
+            solvetype,
+            realisation,
+            InterpolatedReward,
+            m,
+            t,
+            risk_measure_function,
+        )
         totaltime[1] += time() - start_time
         if print_level > 0
             printlog(t, totaltime[1])
@@ -383,46 +521,78 @@ function solve(m::SDPModel;
 end
 
 function printheader()
-    println("""-------------------------------------------------------------------------------
-                       DynamicProgramming.jl © Oscar Dowson, 2018
-    -------------------------------------------------------------------------------""")
+    println(
+        """-------------------------------------------------------------------------------
+                   DynamicProgramming.jl © Oscar Dowson, 2018
+-------------------------------------------------------------------------------""",
+    )
     println("Stage | Elapsed Time")
-    println("-------------------------------------------------------------------------------")
+    return println(
+        "-------------------------------------------------------------------------------",
+    )
 end
 
 function printlog(t::Int, time::Float64)
-    println(humanize(t, "5d"), "| ", humanize(time, "8.3f"))
+    return println(humanize(t, "5d"), "| ", humanize(time, "8.3f"))
 end
 
 """
 Initialise storage for simulation
 """
-function initialiseresult!(results::Dict{Symbol, Any}, replications, stages, key::Symbol, Ty::DataType)
-    results[key] = Array{Ty}(undef, (stages, replications))
+function initialiseresult!(
+    results::Dict{Symbol,Any},
+    replications,
+    stages,
+    key::Symbol,
+    Ty::DataType,
+)
+    return results[key] = Array{Ty}(undef, (stages, replications))
 end
-initialiseresult!(results, replications, stages, key, x::AbstractVector{T}) where {T} = initialiseresult!(results, replications, stages, key, T)
-initialiseresult!(results, replications, stages, key, x::AbstractVector{WeightedProbability{T}}) where {T} = initialiseresult!(results, replications, stages, key, T)
+function initialiseresult!(
+    results,
+    replications,
+    stages,
+    key,
+    x::AbstractVector{T},
+) where {T}
+    return initialiseresult!(results, replications, stages, key, T)
+end
+function initialiseresult!(
+    results,
+    replications,
+    stages,
+    key,
+    x::AbstractVector{WeightedProbability{T}},
+) where {T}
+    return initialiseresult!(results, replications, stages, key, T)
+end
 
 """
 Simulate policy
 """
-function simulate(m::SDPModel{T,N},  n::Int; kwargs...) where {T,N}
-    results = Dict{Symbol, Any}(
-    :n_stages => N,
-    :n_replications => n,
-    :objective => zeros(n)
+function simulate(m::SDPModel{T,N}, n::Int; kwargs...) where {T,N}
+    results = Dict{Symbol,Any}(
+        :n_stages => N,
+        :n_replications => n,
+        :objective => zeros(n),
     )
     stage0 = m.stages[1]
     for space in [:statespace, :controlspace, :noisespace]
         for (key, idx) in getfield(stage0, space).nameindices
-            initialiseresult!(results, n, N, key, getfield(stage0, space).dimensions[idx])
+            initialiseresult!(
+                results,
+                n,
+                N,
+                key,
+                getfield(stage0, space).dimensions[idx],
+            )
         end
     end
-    stagecost = 0.
-    futurecostcost = 0.
-    beststagecost = 0.
+    stagecost = 0.0
+    futurecostcost = 0.0
+    beststagecost = 0.0
     bestcontrol = Float64[] # TODO: Type stability
-    for replication = 1:n
+    for replication in 1:n
         state = zeros(length(stage0.statespace))
         newstate = similar(state)
         for (key, val) in kwargs
@@ -433,7 +603,10 @@ function simulate(m::SDPModel{T,N},  n::Int; kwargs...) where {T,N}
             end
         end
         for (t, stage) in enumerate(m.stages)
-            noise = map(i->WeightedProbability(rand(i), 0.), stage.noisespace.dimensions)
+            noise = map(
+                i -> WeightedProbability(rand(i), 0.0),
+                stage.noisespace.dimensions,
+            )
             bestobj = worstcase(m.sense)
             beststagecost = worstcase(m.sense)
             bestcontrol = zeros(length(stage.controlspace))
@@ -443,15 +616,16 @@ function simulate(m::SDPModel{T,N},  n::Int; kwargs...) where {T,N}
                     stagecost = stage.dynamics!(newstate, state, control, noise)
                     if withinbounds(newstate, stage.statespace)
                         if t < length(m.stages)
-                            futurecost = getinterpolatedvalue(m.stages[t+1], newstate)
+                            futurecost =
+                                getinterpolatedvalue(m.stages[t+1], newstate)
                         else
                             stagecost += stage.terminalcost(newstate)
-                            futurecost = 0.
+                            futurecost = 0.0
                         end
                         if comparison(m.sense, stagecost + futurecost, bestobj)
-                            bestobj       = stagecost + futurecost
+                            bestobj = stagecost + futurecost
                             beststagecost = stagecost
-                            bestcontrol   = identity(control)
+                            bestcontrol = identity(control)
                         end
                     end
                 end
@@ -468,8 +642,7 @@ function simulate(m::SDPModel{T,N},  n::Int; kwargs...) where {T,N}
                 results[key][t, replication] = noise[index].value
             end
             copy!(state, newstate)
-
         end
     end
-    results
+    return results
 end

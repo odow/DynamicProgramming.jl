@@ -11,31 +11,20 @@ const DP = DynamicProgramming
 @testset "Simple helper functions" begin
     @test DP.comparison(DP.Minimisation, 1.0, 2.0) == true
     @test DP.comparison(DP.Minimisation, 2.0, 1.0) == false
-    @test DP.comparison(DP.Minimisation, 0, 0)     == false
+    @test DP.comparison(DP.Minimisation, 0, 0) == false
 
     @test DP.comparison(DP.Maximisation, 1.0, 2.0) == false
     @test DP.comparison(DP.Maximisation, 2.0, 1.0) == true
-    @test DP.comparison(DP.Maximisation, 0, 0)     == false
+    @test DP.comparison(DP.Maximisation, 0, 0) == false
 end
 
 const examples_dir = joinpath(dirname(dirname(@__FILE__)), "examples")
 
 const Examples = Dict(
-    "AppliedDynamicProgramming" => [
-            "cargo-loading.jl",
-            "flyaway-kit.jl"
-        ],
-    "Bertsekas" => [
-        "inventory_control.jl",
-        "quarterback.jl"
-    ],
-    "FAST" => [
-        "hydro-thermal.jl",
-        "production-management.jl"
-    ],
-    "" => [
-        "air_conditioning.jl"
-    ]
+    "AppliedDynamicProgramming" => ["cargo-loading.jl", "flyaway-kit.jl"],
+    "Bertsekas" => ["inventory_control.jl", "quarterback.jl"],
+    "FAST" => ["hydro-thermal.jl", "production-management.jl"],
+    "" => ["air_conditioning.jl"],
 )
 
 @testset "Examples" begin
