@@ -11,10 +11,10 @@
 #   To run with N processors, use
 #       julia -p N battery_storage.jl
 #
-using DynamicProgramming
+using DynamicProgramming, Random
 
 @everywhere begin
-    srand(1111)
+    Random.seed!(1111)
     const discharge_efficiency = 0.97
     const charge_efficiency    = 0.98
     const cost   = rand(50)

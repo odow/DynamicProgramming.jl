@@ -8,7 +8,7 @@ __precompile__()
 
 module DynamicProgramming
 
-using Interpolations, JSON
+using Interpolations, JSON, Printf, Distributed, LinearAlgebra
 
 export
     SDPModel, solve, simulate,

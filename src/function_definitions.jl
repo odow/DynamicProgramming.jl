@@ -15,7 +15,7 @@ function getbound(m, stage; kwargs...)
 
         end
     end
-    stage.interpolatedsurface[state...]
+    stage.interpolatedsurface(state...)
 end
 """
 Test if trial solution is better than the incumbent
@@ -91,12 +91,12 @@ end
 """
 Lookup the interpolated value at a state
 """
-getinterpolatedvalue(stage, state) = stage.interpolatedsurface[state...]
+getinterpolatedvalue(stage, state) = stage.interpolatedsurface(state...)
 
 """
 Create an array of WeightedProbability
 """
-function DiscreteDistribution{T}(observations::AbstractVector{T}, probabilities::AbstractVector)
+function DiscreteDistribution(observations::AbstractVector{T}, probabilities::AbstractVector) where {T}
     @assert length(observations) == length(probabilities)
     if !isapprox(sum(probabilities) , 1.0)
         warn("Weight vector is not normalised. Sum = $(sum(probabilities)). Normalising.")
@@ -145,7 +145,7 @@ end
 """
 Here and Now models choose an action, then observe the noise.
 """
-function _innerloop{T,N}(::Type{HereAndNow}, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64})
+function _innerloop(::Type{HereAndNow}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
     stage = m.stages[t]
     bestobj = worstcase(m.sense)
     reward = 0.0
@@ -184,7 +184,7 @@ end
 Wait and see models observe the noise, then choose the best control.
 The value is the expectation of taking those controls
 """
-function _innerloop{T,N}(::Type{WaitAndSee}, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64})
+function _innerloop(::Type{WaitAndSee}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
 
     stage = m.stages[t]
     n = 1
@@ -226,7 +226,7 @@ end
 """
 ExpectedValue problem
 """
-function _innerloop{T,N}(::Type{ExpectedValue}, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64})
+function _innerloop(::Type{ExpectedValue}, rewardtype::Type{<:RewardType}, m::SDPModel{T, N}, t::Int, state, newstate, riskmeasure::Function, outcomes::Vector{Float64}, probabilities::Vector{Float64}) where {T,N}
     stage = m.stages[t]
     noise = tuple([expectedvalue(dim) for dim in stage.noisespace.dimensions]...)
     bestobj = worstcase(m.sense)
@@ -259,12 +259,12 @@ end
 """
 Solve end of horizon stage
 """
-solveterminal!{T, N}(paralleltype, modtype, m::SDPModel{T, N},riskmeasure::Function) = solvestage!(paralleltype, modtype, TerminalReward, m, N, riskmeasure)
+solveterminal!(paralleltype, modtype, m::SDPModel{T, N},riskmeasure::Function) where {T, N} = solvestage!(paralleltype, modtype, TerminalReward, m, N, riskmeasure)
 
 """
 Solve stage
 """
-function solvestage!(::Type{Serial}, modtype, rewardtype::RewardType, m::SDPModel, t::Int,riskmeasure::Function)
+function solvestage!(::Type{<:Serial}, modtype, rewardtype::Type{<:RewardType}, m::SDPModel, t::Int,riskmeasure::Function)
     stage = m.stages[t]
     newstate = zeros(length(stage.statespace))
     outcomes = zeros(length(product(stage.noisespace)))
@@ -308,7 +308,7 @@ function pmap!(results, f, lst)
     end
 end
 
-function solvestage!{T, N}(::Type{Parallel}, modtype, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, riskmeasure::Function)
+function solvestage!(::Type{Parallel}, modtype, rewardtype::RewardType, m::SDPModel{T, N}, t::Int, riskmeasure::Function) where {T, N}
     sendtoall(_probabilities=zeros(length(product(m.stages[t].noisespace))))
     sendtoall(_outcomes=zeros(length(product(m.stages[t].noisespace))))
 
@@ -350,7 +350,7 @@ end
 Solve SDPModel
 """
 function solve(m::SDPModel;
-    realisation::ModelType=WaitAndSee,
+    realisation::Type{<:ModelType}=WaitAndSee,
     riskmeasure::NestedCVaRType=Expectation(),
     solvetype = nprocs() > 3 ? Parallel : Serial,
     print_level::Int = 3
@@ -365,17 +365,17 @@ function solve(m::SDPModel;
     if print_level > 0
         printheader()
     end
-    tic()
+    start_time = time()
     solveterminal!(solvetype, realisation, m, risk_measure_function)
-    totaltime[1] += toq()
+    totaltime[1] += time() - start_time
     if print_level > 0
         printlog(length(m.stages), totaltime[1])
     end
     # backwards recursion
     for t in (length(m.stages)-1):-1:1
-        tic()
+        start_time = time()
         solvestage!(solvetype, realisation, InterpolatedReward, m, t, risk_measure_function)
-        totaltime[1] += toq()
+        totaltime[1] += time() - start_time
         if print_level > 0
             printlog(t, totaltime[1])
         end
@@ -387,24 +387,26 @@ function printheader()
                        DynamicProgramming.jl © Oscar Dowson, 2018
     -------------------------------------------------------------------------------""")
     println("Stage | Elapsed Time")
-    println("-------------------------------------------------------------------------------""")
+    println("-------------------------------------------------------------------------------")
 end
+
 function printlog(t::Int, time::Float64)
     println(humanize(t, "5d"), "| ", humanize(time, "8.3f"))
 end
+
 """
 Initialise storage for simulation
 """
 function initialiseresult!(results::Dict{Symbol, Any}, replications, stages, key::Symbol, Ty::DataType)
-    results[key] = Array{Ty}((stages, replications))
+    results[key] = Array{Ty}(undef, (stages, replications))
 end
-initialiseresult!{T}(results, replications, stages, key, x::AbstractVector{T}) = initialiseresult!(results, replications, stages, key, T)
-initialiseresult!{T}(results, replications, stages, key, x::AbstractVector{WeightedProbability{T}}) = initialiseresult!(results, replications, stages, key, T)
+initialiseresult!(results, replications, stages, key, x::AbstractVector{T}) where {T} = initialiseresult!(results, replications, stages, key, T)
+initialiseresult!(results, replications, stages, key, x::AbstractVector{WeightedProbability{T}}) where {T} = initialiseresult!(results, replications, stages, key, T)
 
 """
 Simulate policy
 """
-function simulate{T,N}(m::SDPModel{T,N},  n::Int; kwargs...)
+function simulate(m::SDPModel{T,N},  n::Int; kwargs...) where {T,N}
     results = Dict{Symbol, Any}(
     :n_stages => N,
     :n_replications => n,

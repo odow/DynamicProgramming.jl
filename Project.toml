@@ -1,0 +1,16 @@
+name = "DynamicProgramming"
+uuid = "4f66ce1b-7027-460a-9d32-7f816a89c608"
+authors = ["Oscar Dowson <o.dowson@gmail.com"]
+version = "0.1.0"
+
+[deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[compat]
+Interpolations = "0.13"
+JSON = "0.21"
+julia = "1.6"

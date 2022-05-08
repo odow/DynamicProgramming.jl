@@ -19,7 +19,7 @@
     many questions of similar natures.
 =#
 
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test
 
 m = SDPModel(sense=:Max, stages=8) do sp, t
     weights = [20, 18, 14, 12, 10, 16, 22, 24]

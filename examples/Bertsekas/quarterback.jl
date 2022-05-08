@@ -22,7 +22,7 @@
     when an interception occurs.
 =#
 
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test
 
 m = SDPModel(
         stages = 4, # four downs

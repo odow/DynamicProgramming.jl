@@ -6,7 +6,7 @@
 
 #=
     The air conditioning example from Anthony Papavasiliou
-    https://perso.uclouvain.be/anthony.papavasiliou/public_html/SDDP.pdf
+    https://web.archive.org/web/20200504214809/https://perso.uclouvain.be/anthony.papavasiliou/public_html/SDDP.pdf
 
     Consider the following problem
         Produce air conditioners for 3 months
@@ -19,7 +19,7 @@
 
     Optimal bound $62,500
 =#
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test, Random
 
 function airconditioningmodel()
     m = SDPModel(
@@ -56,12 +56,12 @@ function airconditioningmodel()
         end
 
         constraints!(sp) do x, u, w
-            x[storage] + u[production] + u[overtime] - w[demand] >= 0
+            0 <= x[storage] + u[production] + u[overtime] - w[demand] <= 300
         end
     end
 end
 
-srand(1234)
+Random.seed!(1234)
 m = airconditioningmodel()
 solve(m, realisation=WaitAndSee)
 @test isapprox(DynamicProgramming.getbound(m, 1, storage=0), -62_500.0)

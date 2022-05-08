@@ -9,7 +9,7 @@
     https://github.com/leopoldcambier/FAST/blob/daea3d80a5ebb2c52f78670e34db56d53ca2e778/examples/production management multiple stages/
 ==#
 
-using DynamicProgramming, Base.Test
+using DynamicProgramming, Test
 
 m = SDPModel(
                 sense  = :Min,

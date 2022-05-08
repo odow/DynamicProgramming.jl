@@ -4,22 +4,24 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #############################################################################
 
-macro dispatchhelper(T, args...)
-    code = quote end
-    ex = Expr(:curly, :Union)
-    for arg in args
-        push!(code.args, Expr(:typealias, arg, Expr(:curly, :Val, QuoteNode(arg))))
-        push!(ex.args, Expr(:curly, :Type, arg))
-    end
-    push!(code.args, Expr(:typealias, T, ex))
-    code
-end
-@dispatchhelper(ModelType, HereAndNow, WaitAndSee, ExpectedValue)
-@dispatchhelper(ModelSense, Minimisation, Maximisation)
-@dispatchhelper(RewardType, TerminalReward, InterpolatedReward)
-@dispatchhelper(SolveType, Parallel, Serial)
+abstract type ModelType end
+abstract type HereAndNow <: ModelType end
+abstract type WaitAndSee <: ModelType end
+abstract type ExpectedValue <: ModelType end
 
-import Base: product, indices, length, convert, rand, isless
+abstract type ModelSense end
+abstract type Minimisation <: ModelSense end
+abstract type Maximisation <: ModelSense end
+
+abstract type RewardType end
+abstract type TerminalReward <: RewardType end
+abstract type InterpolatedReward <: RewardType end
+
+abstract type SolveType end
+abstract type Parallel <: SolveType end
+abstract type Serial <: SolveType end
+
+import Base: product, axes, length, convert, rand, isless
 
 struct NestedCVaRType
     lambda::Float64
@@ -66,11 +68,12 @@ struct WeightedProbability{T}
     value::T
     probability::Float64
 end
-Base.isless{T}(x::WeightedProbability{T}, y::WeightedProbability{T}) = isless(x.value, y.value)
+Base.isless(x::WeightedProbability{T}, y::WeightedProbability{T}) where {T} = isless(x.value, y.value)
+
 """
 Sample from a vector of WeightedProbability
 """
-function Base.rand{T}(x::Vector{WeightedProbability{T}})
+function Base.rand(x::Vector{WeightedProbability{T}}) where {T}
     r = rand()
     @inbounds for i in x
         r -= i.probability
@@ -84,7 +87,7 @@ end
 """
 Conversion helpers for Vectors of WeightedProbability
 """
-function Base.convert{T, V<:AbstractVector}(::Type{Vector{WeightedProbability{T}}}, x::V)
+function Base.convert(::Type{Vector{WeightedProbability{T}}}, x::V) where {T, V<:AbstractVector}
     y = WeightedProbability{T}[]
     prob = 1. / length(x)
     for xi in x
@@ -92,13 +95,13 @@ function Base.convert{T, V<:AbstractVector}(::Type{Vector{WeightedProbability{T}
     end
     y
 end
-Base.convert{T}(::Type{Vector{WeightedProbability{T}}}, x::Vector{WeightedProbability{T}}) = x
+Base.convert(::Type{Vector{WeightedProbability{T}}}, x::Vector{WeightedProbability{T}}) where {T} = x
 
 """
 Some helper functions to return type
 """
-getType{T}(x::AbstractVector{T}) = T
-getType{T}(x::AbstractVector{WeightedProbability{T}}) = T
+getType(x::AbstractVector{T}) where {T} = T
+getType(x::AbstractVector{WeightedProbability{T}}) where {T} = T
 
 """
 A GenericSpace is a space defined by discrete points along N dimensions.
@@ -111,6 +114,7 @@ struct GenericSpace{T, T2, N}
     maximum::T2 # Minimum values
     bounded::Tuple{Vararg{Bool, N}}
 end
+
 GenericSpace(;kwargs...) = GenericSpace(v->v;kwargs...)
 GenericSpace(T::DataType; kwargs...) = GenericSpace(v->convert(Vector{T}, v); kwargs...)
 GenericSpace(::Type{WeightedProbability}; kwargs...) = GenericSpace(v->convert(Vector{WeightedProbability{getType(v)}}, v); kwargs...)
@@ -137,7 +141,7 @@ end
 Base.length(gs::GenericSpace) = length(gs.dimensions)
 Base.product(gs::GenericSpace) = product(gs.dimensions...)
 Base.product() = [()]
-Base.indices(gs::GenericSpace) = product(gs.indices...)
+Base.axes(gs::GenericSpace) = product(gs.indices...)
 
 # ===================================
 mutable struct Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
@@ -145,35 +149,38 @@ mutable struct Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
     controlspace::U
     noisespace::V
     bellmansurface::Array{Float64, M}
-    interpolatedsurface::Interpolations.GriddedInterpolation{Float64, M, Float64, Interpolations.Gridded{Interpolations.Linear}, T,0}
+    interpolatedsurface::Interpolations.GriddedInterpolation #{Float64, M, Float64, Interpolations.Gridded{Interpolations.Linear}, T, 0}
     dynamics!::Function                 # dynamics!(x', x, u, w)
     reward::Function                    # r(x, u, w)
     terminalcost::Function              # k(x, u, w)
     isfeasible::Function                # k(x, u, w)
 end
+
 function Stage(M, tmpdict)
     if !haskey(tmpdict, :dynamics)
         error("Must specify dynamics")
     end
+
     if !haskey(tmpdict, :reward)
         error("Must specify reward function")
     end
+
     Stage(
-    tmpdict[:statespace],
-    tmpdict[:controlspace],
-    tmpdict[:noisespace],
-    Array{Float64}(tuple(map(length, tmpdict[:statespace].dimensions)...)),
-    interpolate(tuple(fill(Float64[], M)...), Array{Float64}(tuple(zeros(Int, M)...)), Gridded(Linear())),
-    tmpdict[:dynamics],
-    tmpdict[:reward],
-    tmpdict[:terminalcost],
-    tmpdict[:isfeasible]
+        tmpdict[:statespace],
+        tmpdict[:controlspace],
+        tmpdict[:noisespace],
+        Array{Float64}(undef, tuple(map(length, tmpdict[:statespace].dimensions)...)),
+        interpolate(tuple(fill(Float64[], M)...), Array{Float64}(undef, tuple(zeros(Int, M)...)), Gridded(Linear())),
+        tmpdict[:dynamics],
+        tmpdict[:reward],
+        tmpdict[:terminalcost],
+        tmpdict[:isfeasible]
     )
 end
 
 mutable struct SDPModel{T<:Stage, N}
     stages::Tuple{Vararg{T, N}}
-    sense::ModelSense
+    sense::Type{<:ModelSense}
 end
 
 function SDPModel(buildstage!::Function;
@@ -181,16 +188,18 @@ function SDPModel(buildstage!::Function;
     sense::Symbol = :Max
     )
 
-    modsense = (sense==:Max?Maximisation:Minimisation)
+    modsense = (sense==:Max ? Maximisation : Minimisation)
     outstages = Stage[]
     for t in 1:stages
         tmpdict = Dict{Symbol, Any}(
-        :noisespace   => GenericSpace(),
-        :terminalcost => (x)->0.,
-        :isfeasible => (x,u,w)->true,
-        :reward => (x,u,w) -> 0.0
+            :noisespace   => GenericSpace(),
+            :terminalcost => (x)->0.,
+            :isfeasible => (x,u,w)->true,
+            :reward => (x,u,w) -> 0.0
         )
+
         buildstage!(tmpdict, t)
+
         # Compilation trigger
         x = tuple([dim[1] for dim in tmpdict[:statespace].dimensions]...)
         y = [dim[1] for dim in tmpdict[:statespace].dimensions]
@@ -201,6 +210,7 @@ function SDPModel(buildstage!::Function;
         tmpdict[:dynamics](y, x, u, w)
         tmpdict[:reward](x, u, w)
         # ====================
+        
         sp = Stage(length(tmpdict[:statespace]), tmpdict)
         push!(outstages, sp)
     end

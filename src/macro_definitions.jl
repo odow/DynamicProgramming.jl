@@ -5,24 +5,26 @@
 #############################################################################
 
 struct ModelVariable
-idx::Int
+    idx::Int
 end
 
 import Base: getindex
+
 Base.getindex(x::AbstractVector, i::ModelVariable) = x[i.idx]
 Base.getindex(x::Tuple, i::ModelVariable) = x[i.idx]
 Base.getindex(x::AbstractVector, i::Tuple{ModelVariable}) = x[i...]
 
 Base.getindex(x::AbstractVector{WeightedProbability}, i::ModelVariable) = x[i.idx].value
-Base.getindex{N}(x::Tuple{Vararg{WeightedProbability, N}}, i::ModelVariable) = x[i.idx].value
+Base.getindex(x::Tuple{Vararg{WeightedProbability, N}}, i::ModelVariable) where {N} = x[i.idx].value
 Base.getindex(x::AbstractVector{WeightedProbability}, i::Tuple{ModelVariable}) = x[i...].value
 Base.getindex(x::Tuple, i::Tuple{ModelVariable}) = x[i...]
-Base.setindex!{T<:Number}(y::AbstractVector, v::T, i::ModelVariable) = (y[i.idx] = v)
-Base.setindex!{T<:Number}(y::AbstractVector, v::T, i::Tuple{ModelVariable}) = (y[i] = v)
+Base.setindex!(y::AbstractVector, v::T, i::ModelVariable) where {T<:Number} = (y[i.idx] = v)
+Base.setindex!(y::AbstractVector, v::T, i::Tuple{ModelVariable}) where {T<:Number} = (y[i] = v)
 
 function macrobody!(ex, blk)
     code = quote end
     i = 1
+    filter!(arg -> typeof(arg) != LineNumberNode, blk.args)
     for line in blk.args
         if !Base.Meta.isexpr(line, :line)
             if line.head == :call
