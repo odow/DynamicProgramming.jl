@@ -50,7 +50,7 @@ solve(m, realisation = HereAndNow, print_level = 0)
 here_and_now_solution = [
     3.7 2.5 1.3
     2.7 1.5 0.3
-    2.828 1.68 1.1
+    2.818 1.68 1.1
 ]
 for t in 1:3
     for xk in 0:1:2
