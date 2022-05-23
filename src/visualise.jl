@@ -45,11 +45,11 @@ function adddata!(
 end
 
 function launch_plot(html_file)
-    if is_windows()
+    if Sys.iswindows()
         run(`$(ENV["COMSPEC"]) /c start $(html_file)`)
-    elseif is_apple()
+    elseif Sys.isapple()
         run(`open $(html_file)`)
-    elseif is_linux() || is_bsd()
+    elseif Sys.islinux() || Sys.isbsd()
         run(`xdg-open $(html_file)`)
     end
 end
@@ -60,6 +60,7 @@ macro visualise(results, stage, replication, block)
     code = quote
         plot_list = Dict{String,Any}[]
     end
+    filter!(arg -> typeof(arg) != LineNumberNode, block.args)
     for it in block.args
         Base.Meta.isexpr(it, :line) && continue
         output = copy(PLOT_DATA)
@@ -98,18 +99,18 @@ macro visualise(results, stage, replication, block)
     push!(
         code.args,
         quote
-            temporary_html_file = replace(tempname(), ".tmp", ".html")
-            html_string = readstring($HTML_FILE)
+            temporary_html_file = replace(tempname(), ".tmp" => ".html")
+            html_string = read($HTML_FILE, String)
             for asset in $ASSETS
                 cp(
                     joinpath(ASSET_DIR, asset),
                     joinpath(dirname(temporary_html_file), asset),
-                    remove_destination = true,
+                    force = true,
                 )
             end
             json_data = json(plot_list)
             open(temporary_html_file, "w") do f
-                return write(f, replace(html_string, "<!--DATA-->", json_data))
+                return write(f, replace(html_string, "<!--DATA-->" => json_data))
             end
             launch_plot(temporary_html_file)
         end,
