@@ -7,30 +7,30 @@
 #   To run with N processors, use
 #       julia -p N battery_storage.jl
 #
-using DynamicProgramming
+using DynamicProgramming, Distributed
 
 @everywhere begin
     using Distributions
 
     const sampled_errors = rand(Normal(0, 0.0785220888754297), 20)
-    const σ² = linspace(1, 0, 28) # Decreasing variance in changes in price over time
+    const σ² = range(1, stop=0, length=28) # Decreasing variance in changes in price over time
     const transaction_cost = 0.01
 end
 
 m = SDPModel(stages = 28, sense = :Max) do sp, t
     @states(sp, begin
-        contracts in linspace(0, 1.5, 16)
-        price in linspace(3, 9, 10)
-        production in linspace(0, 1.5, 16)
+        contracts in range(0, stop=1.5, length=16)
+        price in range(3, stop=9, length=10)
+        production in range(0, stop=1.5, length=16)
     end)
 
     @controls(sp, begin
-        buy in linspace(0, 1.2, 13)
+        buy in range(0, stop=1.2, length=13)
     end)
 
     @noises(sp, begin
         alpha in sampled_errors
-        beta in linspace(0.0, 0.05, 5)
+        beta in range(0.0, stop=0.05, length=5)
     end)
 
     dynamics!(sp) do y, x, u, w

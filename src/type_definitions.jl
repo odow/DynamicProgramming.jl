@@ -145,16 +145,17 @@ function GenericSpace(conversion::Function; kwargs...)
     mins = Any[]
     maxs = Any[]
     bounded = Bool[]
-    j = 1
-    for (key, value) in kwargs
+
+    for (j, (key, value)) in enumerate(kwargs)
         nameindices[key] = j
         push!(dims, conversion(value))
         push!(indices, 1:length(value))
         push!(mins, minimum(value))
         push!(maxs, maximum(value))
-        push!(bounded, false)
-        j += 1
+        # always true, we are considering only discretized states
+        push!(bounded, true)
     end
+
     return GenericSpace{
         typeof(tuple(dims...)),
         typeof(tuple(mins...)),
