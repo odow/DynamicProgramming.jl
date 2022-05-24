@@ -11,13 +11,13 @@ https://discourse.julialang.org/t/parametrize-jump-problem-for-repeat-evaluation
 	This is very similar to AppliedDynamicProgramming/cargo-loading.jl.
 =#
 
-using DynamicProgramming
+using DynamicProgramming, LinearAlgebra
 
 TOT_COURSES = 10
 MAX_COURSES = 5
 BUDGET = 3
-price = collect(linspace(0.1, 1, TOT_COURSES))
-prefs = collect(linspace(0.1, 1, TOT_COURSES))
+price = collect(range(0.1, stop = 1, length = TOT_COURSES))
+prefs = collect(range(0.1, stop = 1, length = TOT_COURSES))
 
 model = SDPModel(stages = TOT_COURSES, sense = :Max) do sp, t
     @states(sp, begin

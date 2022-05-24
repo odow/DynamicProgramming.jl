@@ -11,7 +11,7 @@
 #   To run with N processors, use
 #       julia -p N battery_storage.jl
 #
-using DynamicProgramming, Random
+using DynamicProgramming, Random, Distributed
 
 @everywhere begin
     Random.seed!(1111)
@@ -32,7 +32,7 @@ m = SDPModel(stages = 50, sense = :Min) do sp, t
 
     @noises(sp, begin
         # charge leakage
-        xi in linspace(0, 0.1, 10)
+        xi in range(0, stop = 0.1, length = 10)
     end)
 
     dynamics!(sp) do y, x, u, w
