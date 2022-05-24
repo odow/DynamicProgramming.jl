@@ -32,7 +32,7 @@ m = SDPModel(stages = 50, sense = :Min) do sp, t
 
     @noises(sp, begin
         # charge leakage
-        xi in range(0, stop=0.1, length=10)
+        xi in range(0, stop = 0.1, length = 10)
     end)
 
     dynamics!(sp) do y, x, u, w

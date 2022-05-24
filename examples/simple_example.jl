@@ -19,18 +19,18 @@ end
 
 m = SDPModel(stages = 28, sense = :Max) do sp, t
     @states(sp, begin
-        contracts in range(0, stop=1.5, length=16)
-        price in range(3, stop=9, length=10)
-        production in range(0, stop=1.5, length=16)
+        contracts in range(0, stop = 1.5, length = 16)
+        price in range(3, stop = 9, length = 10)
+        production in range(0, stop = 1.5, length = 16)
     end)
 
     @controls(sp, begin
-        buy in range(0, stop=1.2, length=13)
+        buy in range(0, stop = 1.2, length = 13)
     end)
 
     @noises(sp, begin
         alpha in sampled_errors
-        beta in range(0.0, stop=0.05, length=5)
+        beta in range(0.0, stop = 0.05, length = 5)
     end)
 
     dynamics!(sp) do y, x, u, w

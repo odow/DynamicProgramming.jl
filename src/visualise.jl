@@ -110,7 +110,10 @@ macro visualise(results, stage, replication, block)
             end
             json_data = json(plot_list)
             open(temporary_html_file, "w") do f
-                return write(f, replace(html_string, "<!--DATA-->" => json_data))
+                return write(
+                    f,
+                    replace(html_string, "<!--DATA-->" => json_data),
+                )
             end
             launch_plot(temporary_html_file)
         end,

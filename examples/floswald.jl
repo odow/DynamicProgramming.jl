@@ -16,8 +16,8 @@ using DynamicProgramming, LinearAlgebra
 TOT_COURSES = 10
 MAX_COURSES = 5
 BUDGET = 3
-price = collect(range(0.1, stop=1, length=TOT_COURSES))
-prefs = collect(range(0.1, stop=1, length=TOT_COURSES))
+price = collect(range(0.1, stop = 1, length = TOT_COURSES))
+prefs = collect(range(0.1, stop = 1, length = TOT_COURSES))
 
 model = SDPModel(stages = TOT_COURSES, sense = :Max) do sp, t
     @states(sp, begin
