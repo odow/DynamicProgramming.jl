@@ -37,16 +37,22 @@ m = SDPModel(stages = T, sense = :Max) do sp, t
     λ = 0.1
     u₀ = 0
 
-    S(x) = findall(x->x>0, x)
-    P(r, i) = exp((a[i]-r[i])/μ)/(sum(exp((a[j]-r[j])/μ) for j in 1:length(a); init=0.0) + exp(u₀/μ))
-    
-    function Δπ(t, i, x) 
+    S(x) = findall(x -> x > 0, x)
+    function P(r, i)
+        return exp((a[i] - r[i]) / μ) / (
+            sum(exp((a[j] - r[j]) / μ) for j in 1:length(a); init = 0.0) +
+            exp(u₀ / μ)
+        )
+    end
+
+    function Δπ(t, i, x)
         if t == T
             return 0
         else
             e = [x...]
-            e[i] = e[i]-1
-            return m.stages[t+1].interpolatedsurface(x...) - m.stages[t+1].interpolatedsurface(e...)
+            e[i] = e[i] - 1
+            return m.stages[t+1].interpolatedsurface(x...) -
+                   m.stages[t+1].interpolatedsurface(e...)
         end
     end
 
@@ -63,14 +69,14 @@ m = SDPModel(stages = T, sense = :Max) do sp, t
         y[x₁] = x[x₁]
         y[x₂] = x[x₂]
 
-        return sum(λ*P(u[r], i)*(u[r][i]- Δπ(t, i, x)) for i in S(x); init=0.0)
+        return sum(
+            λ * P(u[r], i) * (u[r][i] - Δπ(t, i, x)) for i in S(x);
+            init = 0.0,
+        )
     end
 
     constraints!(sp) do x, u, w
-        return all([
-            all([x...] .≤ inventory),
-            sum([x...]) > sum(inventory) - t,
-        ])
+        return all([all([x...] .≤ inventory), sum([x...]) > sum(inventory) - t])
     end
 end
 
