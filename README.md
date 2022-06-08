@@ -20,7 +20,7 @@ usable but should not be considered stable**.
 You can install it by typing
 
 ```julia
-julia> Pkg.clone("https://github.com/odow/DynamicProgramming.jl.git")
+julia> Pkg.add(url="https://github.com/odow/DynamicProgramming.jl")
 ```
 
 ## Initialise Model
