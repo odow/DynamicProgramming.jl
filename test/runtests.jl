@@ -24,7 +24,7 @@ const Examples = Dict(
     "AppliedDynamicProgramming" => ["cargo-loading.jl", "flyaway-kit.jl"],
     "Bertsekas" => ["inventory_control.jl", "quarterback.jl"],
     "FAST" => ["hydro-thermal.jl", "production-management.jl"],
-    "" => ["air_conditioning.jl"],
+    "" => ["air_conditioning.jl", "dynamic_pricing.jl"],
 )
 
 @testset "Examples" begin
