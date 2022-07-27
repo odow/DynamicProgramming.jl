@@ -34,6 +34,9 @@ dynamics!(f::Function, sp) = dynamics!(sp, f)
 terminalobjective!(sp, f::Function) = (sp[:terminalcost] = f)
 terminalobjective!(f::Function, sp) = terminalobjective!(sp, f)
 
+presolvecallback!(sp, f::Function) = (sp[:presolvecallback!] = f)
+presolvecallback!(f::Function, sp) = presolvecallback!(sp, f)
+
 constraints!(sp, f::Function) = (sp[:isfeasible] = f)
 constraints!(f::Function, sp) = constraints!(sp, f)
 
@@ -192,6 +195,9 @@ function _innerloop(
     stage = m.stages[t]
     bestobj = worstcase(m.sense)
     reward = 0.0
+
+    stage.presolvecallback!(state, stage)
+
     for control in product(stage.controlspace)
         n = 1
         for noise in product(stage.noisespace)
@@ -248,6 +254,9 @@ function _innerloop(
     stage = m.stages[t]
     n = 1
     reward = 0.0
+
+    stage.presolvecallback!(state, stage)
+
     for noise in product(stage.noisespace)
         prob = cumulateprobability(noise)
         bestobj = worstcase(m.sense)
@@ -308,6 +317,9 @@ function _innerloop(
         tuple([expectedvalue(dim) for dim in stage.noisespace.dimensions]...)
     bestobj = worstcase(m.sense)
     reward = 0.0
+
+    stage.presolvecallback!(state, stage)
+
     for control in product(stage.controlspace)
         if stage.isfeasible(state, control, noise)
             reward = stage.dynamics!(newstate, state, control, noise)
@@ -387,6 +399,9 @@ function _innerloop(T, N, realisationtype, rewardtype, t, state, riskmeasure)
     stage = mm.stages[t]
     outcomes = DynamicProgramming._outcomes::Vector{Float64}
     probabilities = DynamicProgramming._probabilities::Vector{Float64}
+
+    stage.presolvecallback!(state, stage)
+
     return _innerloop(
         realisationtype,
         rewardtype,

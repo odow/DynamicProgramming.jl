@@ -21,6 +21,7 @@ export SDPModel,
     # model functions
     dynamics!,
     terminalobjective!,
+    presolvecallback!,
     constraints!,
     DiscreteDistribution,
     # risk measures
@@ -29,7 +30,9 @@ export SDPModel,
     # uncertainty realisations
     WaitAndSee,
     HereAndNow,
-    ExpectedValue
+    ExpectedValue,
+    # space
+    GenericSpace
 
 @deprecate WeightedDist DiscreteDistribution
 

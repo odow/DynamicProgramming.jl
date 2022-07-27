@@ -186,6 +186,7 @@ mutable struct Stage{T,T2,N,GS1<:GenericSpace,GS2<:GenericSpace}
     reward::Function                    # r(x, u, w)
     terminalcost::Function              # k(x, u, w)
     isfeasible::Function                # k(x, u, w)
+    presolvecallback!::Function         # k(x, s)
 end
 
 function Stage(M, tmpdict)
@@ -214,6 +215,7 @@ function Stage(M, tmpdict)
         tmpdict[:reward],
         tmpdict[:terminalcost],
         tmpdict[:isfeasible],
+        tmpdict[:presolvecallback!],
     )
 end
 
@@ -231,6 +233,7 @@ function SDPModel(buildstage!::Function; stages::Int = 1, sense::Symbol = :Max)
             :terminalcost => (x) -> 0.0,
             :isfeasible => (x, u, w) -> true,
             :reward => (x, u, w) -> 0.0,
+            :presolvecallback! => (x, s) -> nothing,
         )
 
         buildstage!(tmpdict, t)
