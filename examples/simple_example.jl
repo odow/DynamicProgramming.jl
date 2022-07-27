@@ -5,7 +5,7 @@
 #############################################################################
 #
 #   To run with N processors, use
-#       julia -p N battery_storage.jl
+#       julia -p N simple_example.jl
 #
 using DynamicProgramming, Distributed
 

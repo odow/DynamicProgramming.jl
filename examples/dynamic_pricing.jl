@@ -40,7 +40,7 @@ m = SDPModel(stages = T, sense = :Max) do sp, t
     S(x) = findall(x -> x > 0, x)
     function P(r, i)
         return exp((a[i] - r[i]) / μ) / (
-            sum(exp((a[j] - r[j]) / μ) for j in 1:length(a); init = 0.0) +
+            sum(exp((a[j] - r[j]) / μ) for j in eachindex(a); init = 0.0) +
             exp(u₀ / μ)
         )
     end
@@ -80,6 +80,6 @@ m = SDPModel(stages = T, sense = :Max) do sp, t
     end
 end
 
-DynamicProgramming.solve(m)
+solve(m)
 
 @test isapprox(m.stages[1].interpolatedsurface[2.0, 1.0], 1.96, atol = 1e-2)
