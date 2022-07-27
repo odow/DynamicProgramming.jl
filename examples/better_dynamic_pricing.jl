@@ -95,7 +95,7 @@ end
 DynamicProgramming.solve(m)
 
 @test isapprox(
-    sum(m.stages[t].interpolatedsurface[5, 5, 5] for t in range(1, T)),
+    sum(m.stages[t].interpolatedsurface[5, 5, 5] for t in 1:T),
     4145.263,
     atol = 1e-2,
 )
