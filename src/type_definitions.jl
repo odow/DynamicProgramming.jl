@@ -124,7 +124,7 @@ struct GenericSpace{T,T2,N}
     indices::Tuple{Vararg{UnitRange{Int},N}} # List of indices
     nameindices::Dict{Symbol,Int}            # a reference naming dict
     minimum::T2 # Minimum values
-    maximum::T2 # Minimum values
+    maximum::T2 # Maximum values
     bounded::Tuple{Vararg{Bool,N}}
 end
 
@@ -176,16 +176,17 @@ Base.product() = [()]
 Base.axes(gs::GenericSpace) = product(gs.indices...)
 
 # ===================================
-mutable struct Stage{T,T2,M,U<:GenericSpace,V<:GenericSpace}
-    statespace::GenericSpace{T,T2,M}
-    controlspace::U
-    noisespace::V
-    bellmansurface::Array{Float64,M}
+mutable struct Stage{T,T2,N,GS1<:GenericSpace,GS2<:GenericSpace}
+    statespace::GenericSpace{T,T2,N}
+    controlspace::GS1
+    noisespace::GS2
+    bellmansurface::Array{Float64,N}
     interpolatedsurface::Interpolations.GriddedInterpolation #{Float64, M, Float64, Interpolations.Gridded{Interpolations.Linear}, T, 0}
     dynamics!::Function                 # dynamics!(x', x, u, w)
     reward::Function                    # r(x, u, w)
     terminalcost::Function              # k(x, u, w)
     isfeasible::Function                # k(x, u, w)
+    presolvecallback!::Function         # k(x, s)
 end
 
 function Stage(M, tmpdict)
@@ -214,6 +215,7 @@ function Stage(M, tmpdict)
         tmpdict[:reward],
         tmpdict[:terminalcost],
         tmpdict[:isfeasible],
+        tmpdict[:presolvecallback!],
     )
 end
 
@@ -231,6 +233,7 @@ function SDPModel(buildstage!::Function; stages::Int = 1, sense::Symbol = :Max)
             :terminalcost => (x) -> 0.0,
             :isfeasible => (x, u, w) -> true,
             :reward => (x, u, w) -> 0.0,
+            :presolvecallback! => (x, s) -> nothing,
         )
 
         buildstage!(tmpdict, t)

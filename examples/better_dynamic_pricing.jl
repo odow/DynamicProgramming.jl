@@ -18,32 +18,30 @@
 #  enterprise needs to find the best policy to maximize the expected profit 
 #  for each period t ∈ T.
 #
-#  πₜ(x) = max rₜ∈ℝⁿ {λ ∑i∈S(x) P(rₜ, i)[rₜ(i) Δπ(t, i, x)] + πₜ₋₁(x) }
-#  where Δπ = πₜ₋₁(x) - πₜ₋₁(x-eⁱ), eⁱ is the unit vector with 1 in
-#  position i and S(x) returns the non zero inventory items.
+#  πₜ(xₜ) = λ ∑ᵗₛ₌₁(mₛ(xₜ)-μ) where m is the solution of mₜ(xₜ)P⁰ₜ(rₜ*) = μ
+#
+#  From 10.1287/msom.1080.0221
 #
 #  To run with N processors, use
-#      julia -p N dynamic_pricing.jl
+#      julia -p N better_dynamic_pricing.jl
 
-using DynamicProgramming
-using Test
+using DynamicProgramming, Distributed, Test
 
-T = 4
+@everywhere begin
+    using Roots
+
+    const T = 100
+    const inventory = (5, 5, 5)
+    const a = [11.75, 9, 6.25]
+    const μ = 1
+    const λ = 0.1
+    const u₀ = 0
+end
+
+margins = Dict{Tuple{Int,Tuple},Float64}()
 
 m = SDPModel(stages = T, sense = :Max) do sp, t
-    inventory = (2, 1)
-    a = (10, 5)
-    μ = 1
-    λ = 0.1
-    u₀ = 0
-
     S(x) = findall(x -> x > 0, x)
-    function P(r, i)
-        return exp((a[i] - r[i]) / μ) / (
-            sum(exp((a[j] - r[j]) / μ) for j in eachindex(a); init = 0.0) +
-            exp(u₀ / μ)
-        )
-    end
 
     function Δπ(t, i, x)
         if t == T
@@ -59,27 +57,45 @@ m = SDPModel(stages = T, sense = :Max) do sp, t
     @states(sp, begin
         x₁ in 0:inventory[1]
         x₂ in 0:inventory[2]
+        x₃ in 0:inventory[3]
     end)
 
     @controls(sp, begin
-        r = collect(Base.product(0:1:5, 0:1:5))
+        margin = 0.0
     end)
 
     dynamics!(sp) do y, x, u, w
         y[x₁] = x[x₁]
         y[x₂] = x[x₂]
+        y[x₃] = x[x₃]
 
-        return sum(
-            λ * P(u[r], i) * (u[r][i] - Δπ(t, i, x)) for i in S(x);
-            init = 0.0,
-        )
+        return λ * (u[margin] - μ)
     end
 
     constraints!(sp) do x, u, w
         return all([all([x...] .≤ inventory), sum([x...]) > sum(inventory) - t])
     end
+
+    presolvecallback!(sp) do x, s
+        if !haskey(margins, (t, x))
+            margins[(t, x)] = find_zero(
+                margin::Float64 ->
+                    (margin / μ - 1) * exp((margin + u₀) / μ) - sum(
+                        exp((a[i] - Δπ(t, i, x)) / μ) for i in S(x);
+                        init = 0,
+                    ),
+                μ,
+            )
+        end
+
+        return s.controlspace = GenericSpace(; margin = margins[(t, x)])
+    end
 end
 
-solve(m)
+DynamicProgramming.solve(m)
 
-@test isapprox(m.stages[1].interpolatedsurface[2.0, 1.0], 1.96, atol = 1e-2)
+@test isapprox(
+    sum(m.stages[t].interpolatedsurface[5, 5, 5] for t in 1:T),
+    4145.263,
+    atol = 1e-2,
+)
