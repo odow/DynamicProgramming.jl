@@ -1,0 +1,5 @@
+[deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+DynamicProgramming = "4f66ce1b-7027-460a-9d32-7f816a89c608"
+Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
