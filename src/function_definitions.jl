@@ -426,9 +426,9 @@ function pmap!(results, f, lst)
 end
 
 function solvestage!(
-    ::Type{Parallel},
+    ::Type{<:Parallel},
     modtype,
-    rewardtype::RewardType,
+    rewardtype::Type{<:RewardType},
     m::SDPModel{T,N},
     t::Int,
     riskmeasure::Function,
@@ -461,9 +461,10 @@ function distribute_work_void!(f::Function, args...)
         end
     end
 end
+
 function sendto(p::Int, env; args...)
     for (nm, val) in args
-        @spawnat(p, eval(env, Expr(:(=), nm, val)))
+        @spawnat(p, eval(Expr(:(=), nm, val)))
     end
 end
 
